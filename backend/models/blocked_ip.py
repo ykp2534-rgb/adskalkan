@@ -17,5 +17,6 @@ class BlockedIP(BlockedIPBase):
     pool_codes: List[str] = Field(default_factory=list)
     blocked_by_user_id: str
     blocked_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    expires_at: Optional[datetime] = None  # YENİ: Engelleme bitiş tarihi
     is_global: bool = False  # True = tüm havuzlar için engellenmiş
     detection_count: int = 1  # Kaç kez tespit edildi
