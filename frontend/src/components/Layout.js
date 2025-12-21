@@ -29,6 +29,11 @@ const Layout = () => {
     { name: 'Kampanyalar', href: '/campaigns', icon: Target },
     { name: 'Havuzlar', href: '/pools', icon: Users },
   ];
+  
+  // Operator/Admin için ekstra link
+  if (user?.role === 'operator' || user?.role === 'admin') {
+    navigation.push({ name: 'Operatör Panel', href: '/operator', icon: Shield });
+  }
 
   const isActive = (path) => location.pathname === path;
 
