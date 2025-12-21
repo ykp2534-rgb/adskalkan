@@ -60,15 +60,34 @@ async def get_my_pools(user = Depends(get_user_from_token)):
 
 @router.post("/join")
 async def join_pool(membership: PoolMemberCreate, user = Depends(get_user_from_token)):
-    """Havuza katıl"""
+    """Havuza katıl (ayarlarla)"""
     db = await get_database()
     
-    success = await pool_service.join_pool(db, user['id'], membership.pool_code)
+    # Ayarları doğrula
+    if membership.click_threshold < 1 or membership.click_threshold > 10:
+        raise HTTPException(status_code=400, detail="Click threshold must be between 1-10")
+    
+    if membership.block_duration_days < 1 or membership.block_duration_days > 30:
+        raise HTTPException(status_code=400, detail="Block duration must be between 1-30 days")
+    
+    success = await pool_service.join_pool(
+        db, 
+        user['id'], 
+        membership.pool_code,
+        membership.click_threshold,
+        membership.block_duration_days
+    )
     
     if not success:
         raise HTTPException(status_code=400, detail="Could not join pool")
     
-    return {"message": f"Successfully joined pool {membership.pool_code}"}
+    return {
+        "message": f"Successfully joined pool {membership.pool_code}",
+        "settings": {
+            "click_threshold": membership.click_threshold,
+            "block_duration_days": membership.block_duration_days
+        }
+    }
 
 @router.get("/{pool_code}", response_model=Pool)
 async def get_pool(pool_code: str, user = Depends(get_user_from_token)):
