@@ -155,6 +155,101 @@ async def get_pool_blocked_ips(
     return blocked_ips
 
 @router.put("/{pool_code}/sector")
+
+
+@router.post("/operator/create-pool", response_model=Pool)
+async def operator_create_pool(pool_data: OperatorCreatePool, user = Depends(get_user_from_token)):
+    """Operator: Yeni havuz oluştur - şehir ve sektör seçimi"""
+    db = await get_database()
+    
+    # Sadece operator veya admin oluşturabilir
+    if user['role'] not in ['operator', 'admin']:
+        raise HTTPException(status_code=403, detail="Only operators can create pools")
+    
+    # Şehir için sonraki sektör kodunu bul
+    existing_pools = await db.pools.find({"city_plate_code": pool_data.city_plate_code}).to_list(None)
+    
+    if existing_pools:
+        # Son sektör kodunu bul
+        sector_codes = [int(p['sector_code']) for p in existing_pools]
+        next_sector_code = max(sector_codes) + 1
+    else:
+        next_sector_code = 1
+    
+    # Pool code oluştur
+    pool_code = f"{pool_data.city_plate_code}{str(next_sector_code).zfill(3)}"
+    
+    # Havuz oluştur
+    pool = await pool_service.create_pool(
+        db,
+        pool_code,
+        pool_data.sector_name
+    )
+    
+    # Fiyatı güncelle
+    await db.pools.update_one(
+        {"pool_code": pool_code},
+        {"$set": {"membership_price": pool_data.membership_price}}
+    )
+    
+    logger.info(f"Operator {user['email']} created pool {pool_code}: {pool_data.sector_name}")
+    
+    return {**pool, "membership_price": pool_data.membership_price}
+
+@router.get("/operator/cities")
+async def get_cities(user = Depends(get_user_from_token)):
+    """Operator: Türkiye şehir listesi"""
+    if user['role'] not in ['operator', 'admin']:
+        raise HTTPException(status_code=403, detail="Only operators can access this")
+    
+    cities = {
+        "01": "Adana", "02": "Adıyaman", "03": "Afyonkarahisar", "04": "Ağrı", "05": "Amasya",
+        "06": "Ankara", "07": "Antalya", "08": "Artvin", "09": "Aydın", "10": "Balıkesir",
+        "11": "Bilecik", "12": "Bingöl", "13": "Bitlis", "14": "Bolu", "15": "Burdur",
+        "16": "Bursa", "17": "Çanakkale", "18": "Çankırı", "19": "Çorum", "20": "Denizli",
+        "21": "Diyarbakır", "22": "Edirne", "23": "Elazığ", "24": "Erzincan", "25": "Erzurum",
+        "26": "Eskişehir", "27": "Gaziantep", "28": "Giresun", "29": "Gümüşhane", "30": "Hakkari",
+        "31": "Hatay", "32": "Isparta", "33": "Mersin", "34": "İstanbul", "35": "İzmir",
+        "36": "Kars", "37": "Kastamonu", "38": "Kayseri", "39": "Kırklareli", "40": "Kırşehir",
+        "41": "Kocaeli", "42": "Konya", "43": "Kütahya", "44": "Malatya", "45": "Manisa",
+        "46": "Kahramanmaraş", "47": "Mardin", "48": "Muğla", "49": "Muş", "50": "Nevşehir",
+        "51": "Niğde", "52": "Ordu", "53": "Rize", "54": "Sakarya", "55": "Samsun",
+        "56": "Siirt", "57": "Sinop", "58": "Sivas", "59": "Tekirdağ", "60": "Tokat",
+        "61": "Trabzon", "62": "Tunceli", "63": "Şanlıurfa", "64": "Uşak", "65": "Van",
+        "66": "Yozgat", "67": "Zonguldak", "68": "Aksaray", "69": "Bayburt", "70": "Karaman",
+        "71": "Kırıkkale", "72": "Batman", "73": "Şırnak", "74": "Bartın", "75": "Ardahan",
+        "76": "Iğdır", "77": "Yalova", "78": "Karabük", "79": "Kilis", "80": "Osmaniye", "81": "Düzce"
+    }
+    
+    return [{"code": k, "name": v} for k, v in cities.items()]
+
+@router.get("/operator/stats")
+async def operator_stats(user = Depends(get_user_from_token)):
+    """Operator: Genel havuz istatistikleri"""
+    db = await get_database()
+    
+    if user['role'] not in ['operator', 'admin']:
+        raise HTTPException(status_code=403, detail="Only operators can access this")
+    
+    total_pools = await db.pools.count_documents({})
+    total_members = await db.pool_members.count_documents({"is_active": True})
+    total_blocked_ips = await db.blocked_ips.count_documents({})
+    
+    # Şehir bazında havuz sayısı
+    city_pipeline = [
+        {"$group": {"_id": "$city_plate_code", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+        {"$limit": 10}
+    ]
+    top_cities = await db.pools.aggregate(city_pipeline).to_list(None)
+    
+    return {
+        "total_pools": total_pools,
+        "total_members": total_members,
+        "total_blocked_ips": total_blocked_ips,
+        "top_cities": top_cities
+    }
+
 async def update_pool_sector(
     pool_code: str,
     sector_name: str,
