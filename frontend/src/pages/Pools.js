@@ -15,6 +15,10 @@ const Pools = () => {
   const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [poolCode, setPoolCode] = useState('');
+  
+  // YENİ: Havuz ayarları
+  const [clickThreshold, setClickThreshold] = useState(1);
+  const [blockDuration, setBlockDuration] = useState(7);
 
   const fetchPools = async () => {
     try {
