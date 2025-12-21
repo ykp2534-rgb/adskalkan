@@ -41,10 +41,17 @@ const Pools = () => {
 
   const handleJoinPool = async (code) => {
     try {
-      await api.post('/pools/join', { pool_code: code, user_id: '' });
-      toast.success(`Havuz ${code}'a katıldınız!`);
+      await api.post('/pools/join', { 
+        pool_code: code, 
+        user_id: '',
+        click_threshold: clickThreshold,
+        block_duration_days: blockDuration
+      });
+      toast.success(`Havuz ${code}'a katıldınız! (${clickThreshold} tıklama, ${blockDuration} gün)`);
       setOpenDialog(false);
       setPoolCode('');
+      setClickThreshold(1);
+      setBlockDuration(7);
       fetchPools();
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Havuza katılınamadı');
