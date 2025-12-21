@@ -53,6 +53,7 @@ function AppRoutes() {
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="campaigns" element={<Campaigns />} />
           <Route path="pools" element={<Pools />} />
+          <Route path="operator" element={<OperatorPanel />} />
         </Route>
 
         {/* Catch all */}
