@@ -8,6 +8,7 @@ import Register from '@/pages/Register';
 import Dashboard from '@/pages/Dashboard';
 import Campaigns from '@/pages/Campaigns';
 import Pools from '@/pages/Pools';
+import OperatorPanel from '@/pages/OperatorPanel';
 import '@/App.css';
 
 const PrivateRoute = ({ children }) => {
