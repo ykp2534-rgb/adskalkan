@@ -100,14 +100,14 @@ class FraudDetector:
         }
     
     @staticmethod
-    async def trigger_pool_protection(db, ip_address: str, user_id: str, fraud_reasons: List[str]):
+    async def trigger_pool_protection(db, ip_address: str, user_id: str, fraud_reasons: List[str], block_duration_days: int = 7):
         """
         KOLLEKTİF KORUMA - HAVUZ SİSTEMİNİN KALBI!
         
         Bir kullanıcıya şüpheli tıklama geldi mi?
         → Kullanıcının tüm havuzlarındaki TÜM ÜYELERİ koru!
         """
-        logger.warning(f"🚨 POOL PROTECTION TRIGGERED! IP: {ip_address}, User: {user_id}")
+        logger.warning(f"🚨 POOL PROTECTION TRIGGERED! IP: {ip_address}, User: {user_id}, Duration: {block_duration_days} days")
         
         # Kullanıcının üye olduğu havuzları al
         user_pools = await pool_service.get_user_pools(db, user_id)
@@ -118,15 +118,15 @@ class FraudDetector:
         
         reason = f"Fraud detected: {', '.join(fraud_reasons[:3])}"
         
-        # Her havuz için IP'yi engelle
+        # Her havuz için IP'yi engelle (süre ile)
         for pool_code in user_pools:
             await pool_service.block_ip_for_pool(
-                db, ip_address, pool_code, reason, user_id
+                db, ip_address, pool_code, reason, user_id, block_duration_days
             )
             
-            logger.info(f"✅ Pool {pool_code} protected from IP {ip_address}")
+            logger.info(f"✅ Pool {pool_code} protected from IP {ip_address} for {block_duration_days} days")
         
-        logger.warning(f"🛡️ COLLECTIVE PROTECTION: IP {ip_address} blocked for {len(user_pools)} pools")
+        logger.warning(f"🛡️ COLLECTIVE PROTECTION: IP {ip_address} blocked for {len(user_pools)} pools ({block_duration_days} days)")
     
     @staticmethod
     async def get_dashboard_stats(db, user_id: str) -> Dict:
