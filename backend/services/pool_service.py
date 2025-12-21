@@ -130,25 +130,30 @@ class PoolService:
         return user.get("pools_joined", []) if user else []
     
     @staticmethod
-    async def block_ip_for_pool(db, ip_address: str, pool_code: str, reason: str, blocked_by_user_id: str):
+    async def block_ip_for_pool(db, ip_address: str, pool_code: str, reason: str, blocked_by_user_id: str, duration_days: int = 7):
         """
         HAVUZ İÇİN IP ENGELLER - Kollektif koruma
         Bir havuz üyesine şüpheli tıklama tespit edilince tüm havuz korunur
         """
+        from datetime import timedelta
+        
         # Önce IP zaten engellenmiş mi kontrol et
         existing_block = await db.blocked_ips.find_one({"ip_address": ip_address})
         
+        expires_at = datetime.now(timezone.utc) + timedelta(days=duration_days)
+        
         if existing_block:
-            # IP zaten engelli, sadece pool_codes listesine ekle
+            # IP zaten engelli, sadece pool_codes listesine ekle ve süreyi güncelle
             if pool_code not in existing_block.get("pool_codes", []):
                 await db.blocked_ips.update_one(
                     {"ip_address": ip_address},
                     {
                         "$addToSet": {"pool_codes": pool_code},
-                        "$inc": {"detection_count": 1}
+                        "$inc": {"detection_count": 1},
+                        "$set": {"expires_at": expires_at.isoformat()}
                     }
                 )
-                logger.info(f"IP {ip_address} added to pool {pool_code} blacklist")
+                logger.info(f"IP {ip_address} added to pool {pool_code} blacklist (expires in {duration_days} days)")
         else:
             # Yeni engelleme
             block_data = {
@@ -157,6 +162,7 @@ class PoolService:
                 "pool_codes": [pool_code],
                 "blocked_by_user_id": blocked_by_user_id,
                 "blocked_at": datetime.now(timezone.utc).isoformat(),
+                "expires_at": expires_at.isoformat(),
                 "is_global": False,
                 "detection_count": 1
             }
@@ -169,7 +175,7 @@ class PoolService:
                 {"$inc": {"total_blocked_ips": 1}}
             )
             
-            logger.info(f"IP {ip_address} blocked for pool {pool_code}: {reason}")
+            logger.info(f"IP {ip_address} blocked for pool {pool_code} for {duration_days} days: {reason}")
     
     @staticmethod
     async def is_ip_blocked_for_user(db, ip_address: str, user_id: str) -> bool:
