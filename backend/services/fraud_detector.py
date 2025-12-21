@@ -15,10 +15,11 @@ class FraudDetector:
         Gelen tıklamayı işler, analiz eder ve gerekirse engeller
         
         Bu fonksiyon:
-        1. Tıklamayı analiz eder
-        2. Şüpheli ise havuz sistemini tetikler
-        3. Kollektif korumayı aktive eder
-        4. Veritabanına kaydeder
+        1. Kullanıcının havuz ayarlarını alır
+        2. Tıklamayı analiz eder
+        3. Şüpheli ise havuz sistemini tetikler
+        4. Kollektif korumayı aktive eder
+        5. Veritabanına kaydeder
         """
         ip_address = click_data.get('ip_address')
         campaign_id = click_data.get('campaign_id')
@@ -36,9 +37,26 @@ class FraudDetector:
                 "fraud_score": 100
             }
         
-        # 2. Tıklamayı analiz et
+        # 1.5. Kullanıcının havuz ayarlarını al
+        user_pools = await pool_service.get_user_pools(db, user_id)
+        user_pool_settings = None
+        
+        if user_pools:
+            # İlk havuzun ayarlarını al (tüm havuzlarda aynı ayarlar kullanılabilir)
+            pool_member = await db.pool_members.find_one({
+                "user_id": user_id,
+                "pool_code": user_pools[0],
+                "is_active": True
+            })
+            if pool_member:
+                user_pool_settings = {
+                    'click_threshold': pool_member.get('click_threshold', 1),
+                    'block_duration_days': pool_member.get('block_duration_days', 7)
+                }
+        
+        # 2. Tıklamayı analiz et (kullanıcı ayarlarıyla)
         is_suspicious, fraud_score, fraud_reasons = await click_analyzer.analyze_click(
-            click_data, db, user_id
+            click_data, db, user_id, user_pool_settings
         )
         
         # 3. Tıklamayı veritabanına kaydet
@@ -68,7 +86,8 @@ class FraudDetector:
         
         # 5. ŞÜPHELİ İSE HAVUZ SİSTEMİNİ TETİKLE!
         if is_suspicious and fraud_score >= 70:
-            await FraudDetector.trigger_pool_protection(db, ip_address, user_id, fraud_reasons)
+            block_duration = user_pool_settings.get('block_duration_days', 7) if user_pool_settings else 7
+            await FraudDetector.trigger_pool_protection(db, ip_address, user_id, fraud_reasons, block_duration)
         
         logger.info(f"Click processed: user={user_id}, IP={ip_address}, suspicious={is_suspicious}, score={fraud_score}")
         
