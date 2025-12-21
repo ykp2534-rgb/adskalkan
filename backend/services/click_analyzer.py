@@ -13,9 +13,10 @@ class ClickAnalyzer:
             r'python-requests', r'headless', r'phantom', r'selenium'
         ]
         
-    async def analyze_click(self, click_data: dict, db, user_id: str) -> Tuple[bool, int, List[str]]:
+    async def analyze_click(self, click_data: dict, db, user_id: str, user_pool_settings: dict = None) -> Tuple[bool, int, List[str]]:
         """
         Bir tıklamayı analiz eder ve şüpheli olup olmadığını belirler
+        user_pool_settings: Kullanıcının havuz ayarları (click_threshold)
         
         Returns:
             (is_suspicious, fraud_score, fraud_reasons)
@@ -30,9 +31,23 @@ class ClickAnalyzer:
         # 1. IP zaten engellenmiş mi kontrol et
         blocked_ip = await db.blocked_ips.find_one({"ip_address": ip_address})
         if blocked_ip:
-            fraud_score += 100
-            fraud_reasons.append("IP already blocked")
-            return True, fraud_score, fraud_reasons
+            # Engelleme süresi dolmuş mu kontrol et
+            expires_at = blocked_ip.get('expires_at')
+            if expires_at:
+                from datetime import datetime
+                expires_datetime = datetime.fromisoformat(expires_at) if isinstance(expires_at, str) else expires_at
+                if datetime.now(timezone.utc) > expires_datetime:
+                    # Süre dolmuş, engellemeyi kaldır
+                    await db.blocked_ips.delete_one({"ip_address": ip_address})
+                    logger.info(f"IP {ip_address} block expired and removed")
+                else:
+                    fraud_score += 100
+                    fraud_reasons.append("IP already blocked")
+                    return True, fraud_score, fraud_reasons
+            else:
+                fraud_score += 100
+                fraud_reasons.append("IP already blocked")
+                return True, fraud_score, fraud_reasons
         
         # 2. Bot detection (User Agent analizi)
         if user_agent:
@@ -42,19 +57,21 @@ class ClickAnalyzer:
                     fraud_reasons.append("Bot user agent detected")
                     break
         
-        # 3. Click frequency analizi (Aynı IP'den çok fazla tıklama)
+        # 3. Click frequency analizi (KULLANICININ THRESHOLD AYARINA GÖRE)
+        # Varsayılan: 1 dakika içinde kullanıcının threshold ayarına göre kontrol
+        threshold = 5  # Varsayılan
+        if user_pool_settings:
+            threshold = user_pool_settings.get('click_threshold', 1)
+        
         one_minute_ago = datetime.now(timezone.utc) - timedelta(minutes=1)
         recent_clicks = await db.clicks.count_documents({
             "ip_address": ip_address,
             "timestamp": {"$gte": one_minute_ago.isoformat()}
         })
         
-        if recent_clicks > 5:
+        if recent_clicks >= threshold:
             fraud_score += 30
-            fraud_reasons.append(f"Rapid clicking: {recent_clicks} clicks/min")
-        elif recent_clicks > 3:
-            fraud_score += 15
-            fraud_reasons.append(f"High frequency: {recent_clicks} clicks/min")
+            fraud_reasons.append(f"Threshold exceeded: {recent_clicks} clicks (limit: {threshold})")
         
         # 4. Aynı IP'den farklı kampanyalara tıklama (Cross-campaign fraud)
         one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
