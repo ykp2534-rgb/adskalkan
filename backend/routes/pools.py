@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends, Query
-from models.pool import Pool, PoolCreate, PoolMemberCreate, PoolStats
+from models.pool import Pool, PoolCreate, PoolMemberCreate, PoolStats, OperatorCreatePool
 from models.blocked_ip import BlockedIP
 from routes.auth import get_user_from_token
 from database import get_database
