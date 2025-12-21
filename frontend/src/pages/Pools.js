@@ -95,9 +95,12 @@ const Pools = () => {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Havuza Katıl</DialogTitle>
+              <DialogTitle className="flex items-center">
+                <Settings className="w-5 h-5 mr-2" />
+                Havuza Katıl - Koruma Ayarları
+              </DialogTitle>
               <DialogDescription>
-                Havuz kodunu girerek sektör havuzuna katılabilirsiniz
+                Havuz kodunu girin ve koruma ayarlarınızı yapılandırın
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
@@ -115,13 +118,63 @@ const Pools = () => {
                   Format: [Plaka Kodu 2 hane][Sektör Kodu 3 hane]
                 </p>
               </div>
+              
+              {/* YENİ: Click Threshold */}
+              <div>
+                <Label htmlFor="clickThreshold">Tıklama Eşiği (Kaç tıklamada engelle)</Label>
+                <Select value={clickThreshold.toString()} onValueChange={(val) => setClickThreshold(parseInt(val))}>
+                  <SelectTrigger data-testid="click-threshold-select">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1 Tıklama - Maksimum Koruma 🛡️</SelectItem>
+                    <SelectItem value="2">2 Tıklama - Dengeli</SelectItem>
+                    <SelectItem value="3">3 Tıklama - Esnek</SelectItem>
+                    <SelectItem value="5">5 Tıklama - Minimal</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Aynı IP'den kaç tıklama geldiğinde engelleme başlatılsın
+                </p>
+              </div>
+              
+              {/* YENİ: Block Duration */}
+              <div>
+                <Label htmlFor="blockDuration">Engelleme Süresi</Label>
+                <Select value={blockDuration.toString()} onValueChange={(val) => setBlockDuration(parseInt(val))}>
+                  <SelectTrigger data-testid="block-duration-select">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1 Gün</SelectItem>
+                    <SelectItem value="3">3 Gün</SelectItem>
+                    <SelectItem value="7">7 Gün (Önerilen) ⭐</SelectItem>
+                    <SelectItem value="14">14 Gün</SelectItem>
+                    <SelectItem value="30">30 Gün - Maksimum</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Şüpheli IP'ler kaç gün süreyle engellensin
+                </p>
+              </div>
+              
+              {/* Fiyat Bilgisi */}
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                <p className="text-sm font-medium text-orange-800">
+                  💰 Premium Havuz Üyeliği: 99 TL/ay
+                </p>
+                <p className="text-xs text-orange-600 mt-1">
+                  Kollektif koruma ile tüm havuz üyeleri korunur
+                </p>
+              </div>
+              
               <Button 
                 onClick={() => handleJoinPool(poolCode)} 
-                className="w-full"
+                className="w-full bg-gradient-to-r from-orange-500 to-red-500"
                 disabled={poolCode.length !== 5}
                 data-testid="submit-join-pool-button"
               >
-                Katıl
+                Havuza Katıl (99 TL/ay)
               </Button>
             </div>
           </DialogContent>
