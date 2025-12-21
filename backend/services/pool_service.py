@@ -52,9 +52,9 @@ class PoolService:
         return pool_data
     
     @staticmethod
-    async def join_pool(db, user_id: str, pool_code: str) -> bool:
+    async def join_pool(db, user_id: str, pool_code: str, click_threshold: int = 1, block_duration_days: int = 7) -> bool:
         """
-        Kullanıcıyı havuza ekler
+        Kullanıcıyı havuza ekler (ayarlarla)
         """
         # Havuz var mı kontrol et
         pool = await db.pools.find_one({"pool_code": pool_code})
@@ -69,15 +69,27 @@ class PoolService:
         })
         
         if existing_member:
-            logger.info(f"User {user_id} already member of pool {pool_code}")
+            # Ayarları güncelle
+            await db.pool_members.update_one(
+                {"pool_code": pool_code, "user_id": user_id},
+                {"$set": {
+                    "click_threshold": click_threshold,
+                    "block_duration_days": block_duration_days,
+                    "is_active": True
+                }}
+            )
+            logger.info(f"User {user_id} settings updated for pool {pool_code}")
             return True
         
-        # Üyelik oluştur
+        # Üyelik oluştur (ayarlarla)
         member_data = {
             "pool_code": pool_code,
             "user_id": user_id,
             "joined_at": datetime.now(timezone.utc).isoformat(),
-            "is_active": True
+            "is_active": True,
+            "click_threshold": click_threshold,
+            "block_duration_days": block_duration_days,
+            "auto_renew": True
         }
         
         await db.pool_members.insert_one(member_data)
@@ -94,7 +106,7 @@ class PoolService:
             {"$addToSet": {"pools_joined": pool_code}}
         )
         
-        logger.info(f"User {user_id} joined pool {pool_code}")
+        logger.info(f"User {user_id} joined pool {pool_code} with threshold={click_threshold}, duration={block_duration_days}")
         return True
     
     @staticmethod
