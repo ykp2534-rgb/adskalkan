@@ -654,12 +654,17 @@ const LoginPage = ({ onSuccess, onBack }) => {
           <p className="text-sm text-gray-500">Yönetim Paneli</p>
         </div>
         <div className="bg-slate-900 border border-slate-800 rounded-lg p-5">
+          {onBack && (
+            <button onClick={onBack} className="text-gray-500 hover:text-white mb-4 flex items-center gap-1 text-sm">
+              <ChevronLeft className="h-4 w-4" /> Geri
+            </button>
+          )}
           {error && <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-3 py-2 rounded text-sm mb-4">{error}</div>}
           <form onSubmit={handleSubmit} className="space-y-4">
             <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email"
-              className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded text-white text-sm" required />
+              className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded text-white text-sm focus:border-purple-500 outline-none" required />
             <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Şifre"
-              className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded text-white text-sm" required />
+              className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded text-white text-sm focus:border-purple-500 outline-none" required />
             <button type="submit" disabled={loading}
               className="w-full py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 rounded font-medium text-white text-sm disabled:opacity-50">
               {loading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
