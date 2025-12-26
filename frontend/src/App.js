@@ -1,17 +1,12 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import axios from "axios";
 import {
-  Shield, ShieldCheck, ShieldX, Users, Globe,
-  TrendingUp, TrendingDown, Activity, Eye,
-  BarChart3, Zap, AlertTriangle, CheckCircle,
-  XCircle, Clock, Calendar, Filter, Download, RefreshCw, Settings,
-  ChevronRight, ChevronDown, ChevronUp, Menu, LogOut, User,
-  Plus, Trash2, Search, Layers,
-  Smartphone, Laptop, Tablet, MapPin,
-  MousePointer, Timer, MoreVertical,
-  Ban, Bot, CircleDollarSign, ShieldBan, Play, Phone,
-  ArrowUpRight, ArrowDownRight, Monitor,
-  LayoutDashboard, ChevronLeft, PieChart
+  Shield, Users, Globe, Eye, Activity, BarChart3, PieChart, TrendingUp,
+  Download, Filter, Search, ChevronDown, ChevronUp, ChevronLeft, ChevronRight,
+  Calendar, RefreshCw, Settings, LogOut, User, Layers, Ban, FileText,
+  AlertTriangle, CheckCircle, XCircle, Clock, Smartphone, Laptop, Tablet,
+  MapPin, MousePointer, Timer, Package, Megaphone, Server, Home, MoreHorizontal,
+  ArrowUpRight, ArrowDownRight, X, Check
 } from "lucide-react";
 import "./App.css";
 
@@ -25,84 +20,198 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// ==================== COMPONENTS ====================
-
-// Animated Number
-const AnimatedNumber = ({ value, prefix = "", suffix = "" }) => {
-  const [display, setDisplay] = useState(0);
-  useEffect(() => {
-    const target = parseFloat(value) || 0;
-    let current = 0;
-    const step = target / 25;
-    const timer = setInterval(() => {
-      current += step;
-      if (current >= target) { setDisplay(target); clearInterval(timer); }
-      else { setDisplay(Math.floor(current)); }
-    }, 30);
-    return () => clearInterval(timer);
-  }, [value]);
-  return <span>{prefix}{display.toLocaleString('tr-TR')}{suffix}</span>;
+// ==================== MOCK DATA ====================
+const generateMockVisitors = (count) => {
+  const cities = ['Istanbul', 'Ankara', 'Izmir', 'Bursa', 'Antalya', 'Adana', 'Frankfurt', 'Amsterdam', 'London', 'New York'];
+  const countries = ['Turkey', 'Turkey', 'Turkey', 'Turkey', 'Turkey', 'Turkey', 'Germany', 'Netherlands', 'UK', 'USA'];
+  const devices = ['desktop', 'mobile', 'tablet'];
+  const browsers = ['Chrome', 'Firefox', 'Safari', 'Edge', 'Opera'];
+  const os = ['Windows', 'macOS', 'Android', 'iOS', 'Linux'];
+  const sites = ['demo-tesisatci.com', 'example-plumber.com', 'istanbul-tesisat.com', 'ankara-su.com'];
+  const siteNames = ['Demo Tesisatci', 'Example Plumber', 'Istanbul Tesisat', 'Ankara Su'];
+  const riskLevels = ['low', 'medium', 'high', 'critical'];
+  
+  return Array.from({ length: count }, (_, i) => {
+    const siteIdx = Math.floor(Math.random() * sites.length);
+    const cityIdx = Math.floor(Math.random() * cities.length);
+    const riskScore = Math.floor(Math.random() * 100);
+    const riskLevel = riskScore >= 70 ? 'critical' : riskScore >= 50 ? 'high' : riskScore >= 30 ? 'medium' : 'low';
+    const isBlocked = riskScore >= 50;
+    
+    return {
+      id: `visitor-${i}`,
+      ip_address: `${Math.floor(Math.random() * 200) + 50}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
+      site_id: `site-${siteIdx}`,
+      site_name: siteNames[siteIdx],
+      domain: sites[siteIdx],
+      city: cities[cityIdx],
+      country: countries[cityIdx],
+      device_type: devices[Math.floor(Math.random() * devices.length)],
+      device_brand: ['Samsung', 'Apple', 'Dell', 'HP', 'Lenovo'][Math.floor(Math.random() * 5)],
+      browser: browsers[Math.floor(Math.random() * browsers.length)],
+      os: os[Math.floor(Math.random() * os.length)],
+      time_on_page: Math.floor(Math.random() * 120) + 1,
+      scroll_depth: Math.floor(Math.random() * 100),
+      mouse_movements: Math.floor(Math.random() * 500),
+      click_count: Math.floor(Math.random() * 20),
+      risk_score: riskScore,
+      risk_level: riskLevel,
+      is_blocked: isBlocked,
+      created_at: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
+    };
+  });
 };
 
-// Live Pulse
-const LivePulse = () => (
-  <span className="relative flex h-2.5 w-2.5">
-    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
-    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
-  </span>
-);
+const MOCK_VISITORS = generateMockVisitors(500);
 
-// KPI Card with Mini Bar Chart
-const KPICard = ({ title, value, prefix = "", suffix = "", change, changeType, icon: Icon, color, chartData = [] }) => {
+const MOCK_SITES = [
+  { id: 'site-0', name: 'Demo Tesisatci', domain: 'demo-tesisatci.com', pool: 'Istanbul Tesisatçılar', total_visitors: 1250, blocked_visitors: 380, protection_rate: 30.4, last_activity: '2024-01-15T14:30:00Z', is_active: true },
+  { id: 'site-1', name: 'Example Plumber', domain: 'example-plumber.com', pool: 'Ankara Tesisatçılar', total_visitors: 890, blocked_visitors: 156, protection_rate: 17.5, last_activity: '2024-01-15T12:15:00Z', is_active: true },
+  { id: 'site-2', name: 'Istanbul Tesisat', domain: 'istanbul-tesisat.com', pool: 'Istanbul Tesisatçılar', total_visitors: 2100, blocked_visitors: 720, protection_rate: 34.3, last_activity: '2024-01-15T13:45:00Z', is_active: true },
+  { id: 'site-3', name: 'Ankara Su', domain: 'ankara-su.com', pool: 'Ankara Tesisatçılar', total_visitors: 650, blocked_visitors: 98, protection_rate: 15.1, last_activity: '2024-01-14T18:20:00Z', is_active: false },
+];
+
+const MOCK_POOLS = [
+  { id: 'pool-1', name: 'Istanbul Tesisatçılar', sector: 'Tesisatçılık', city: 'Istanbul', sites_count: 12, blocked_ips: 1250, blocked_clicks: 4800, is_active: true },
+  { id: 'pool-2', name: 'Ankara Tesisatçılar', sector: 'Tesisatçılık', city: 'Ankara', sites_count: 8, blocked_ips: 680, blocked_clicks: 2100, is_active: true },
+  { id: 'pool-3', name: 'Izmir Elektrikçiler', sector: 'Elektrik', city: 'Izmir', sites_count: 15, blocked_ips: 920, blocked_clicks: 3500, is_active: true },
+  { id: 'pool-4', name: 'Istanbul Avukatlar', sector: 'Hukuk', city: 'Istanbul', sites_count: 22, blocked_ips: 1800, blocked_clicks: 6200, is_active: true },
+];
+
+const MOCK_USERS = [
+  { id: 'user-1', full_name: 'Ahmet Yılmaz', email: 'ahmet@example.com', company: 'ABC Tesisat', role: 'customer', status: 'approved', sites_count: 3, created_at: '2024-01-01T10:00:00Z' },
+  { id: 'user-2', full_name: 'Mehmet Demir', email: 'mehmet@example.com', company: 'XYZ Elektrik', role: 'customer', status: 'approved', sites_count: 5, created_at: '2024-01-05T14:30:00Z' },
+  { id: 'user-3', full_name: 'Ayşe Kaya', email: 'ayse@example.com', company: 'Kaya Hukuk', role: 'customer', status: 'pending', sites_count: 0, created_at: '2024-01-14T09:15:00Z' },
+  { id: 'user-4', full_name: 'Super Admin', email: 'ykp2534@gmail.com', company: 'AdsKalkan', role: 'super_admin', status: 'approved', sites_count: 0, created_at: '2024-01-01T00:00:00Z' },
+];
+
+// Generate daily stats for charts
+const generateDailyStats = (days) => {
+  return Array.from({ length: days }, (_, i) => {
+    const date = new Date();
+    date.setDate(date.getDate() - (days - 1 - i));
+    const visitors = Math.floor(Math.random() * 500) + 200;
+    const blocked = Math.floor(visitors * (Math.random() * 0.3 + 0.1));
+    return {
+      date: date.toISOString().split('T')[0],
+      visitors,
+      blocked,
+      allowed: visitors - blocked,
+    };
+  });
+};
+
+const DAILY_STATS = generateDailyStats(30);
+
+// ==================== UTILITY FUNCTIONS ====================
+const formatNumber = (num) => num?.toLocaleString('tr-TR') || '0';
+const formatDate = (date) => new Date(date).toLocaleString('tr-TR');
+const formatDateShort = (date) => new Date(date).toLocaleDateString('tr-TR');
+
+// ==================== COMPONENTS ====================
+
+// KPI Card
+const KPICard = ({ title, value, change, changeType, icon: Icon, color, subtitle }) => {
   const colors = {
-    red: { bg: "#dc262615", border: "#dc262630", icon: "#dc2626", chart: "#dc2626" },
-    orange: { bg: "#ea580c15", border: "#ea580c30", icon: "#ea580c", chart: "#ea580c" },
-    green: { bg: "#16a34a15", border: "#16a34a30", icon: "#16a34a", chart: "#16a34a" },
-    purple: { bg: "#9333ea15", border: "#9333ea30", icon: "#9333ea", chart: "#9333ea" },
-    blue: { bg: "#2563eb15", border: "#2563eb30", icon: "#2563eb", chart: "#2563eb" },
-    cyan: { bg: "#0891b215", border: "#0891b230", icon: "#0891b2", chart: "#0891b2" },
+    blue: { bg: 'bg-blue-500/10', border: 'border-blue-500/20', icon: 'text-blue-400' },
+    green: { bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', icon: 'text-emerald-400' },
+    red: { bg: 'bg-red-500/10', border: 'border-red-500/20', icon: 'text-red-400' },
+    orange: { bg: 'bg-orange-500/10', border: 'border-orange-500/20', icon: 'text-orange-400' },
+    purple: { bg: 'bg-purple-500/10', border: 'border-purple-500/20', icon: 'text-purple-400' },
+    cyan: { bg: 'bg-cyan-500/10', border: 'border-cyan-500/20', icon: 'text-cyan-400' },
   };
   const c = colors[color] || colors.blue;
-  const maxVal = Math.max(...chartData, 1);
   
   return (
-    <div className="rounded-xl p-5" style={{ backgroundColor: c.bg, border: `1px solid ${c.border}` }}>
-      <div className="flex items-start justify-between mb-3">
-        <div className="p-2.5 rounded-lg" style={{ backgroundColor: `${c.icon}20` }}>
-          <Icon className="h-5 w-5" style={{ color: c.icon }} />
+    <div className={`${c.bg} ${c.border} border rounded-lg p-4`}>
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-xs text-gray-400 uppercase tracking-wide">{title}</p>
+          <p className="text-2xl font-bold text-white mt-1">{value}</p>
+          {subtitle && <p className="text-xs text-gray-500 mt-1">{subtitle}</p>}
         </div>
-        {change !== undefined && (
-          <div className={`flex items-center gap-1 text-xs font-medium ${changeType === 'up' ? 'text-green-500' : 'text-red-500'}`}>
-            {changeType === 'up' ? <ArrowUpRight className="h-3.5 w-3.5" /> : <ArrowDownRight className="h-3.5 w-3.5" />}
-            {change}%
-          </div>
-        )}
+        <div className={`p-2 rounded-lg ${c.bg}`}>
+          <Icon className={`h-5 w-5 ${c.icon}`} />
+        </div>
       </div>
-      <div className="text-2xl font-bold text-white mb-1">
-        <AnimatedNumber value={value} prefix={prefix} suffix={suffix} />
-      </div>
-      <div className="text-sm text-gray-500">{title}</div>
-      {chartData.length > 0 && (
-        <div className="flex items-end gap-1 h-8 mt-3">
-          {chartData.map((val, i) => (
-            <div key={i} className="flex-1 rounded-sm transition-all" style={{ height: `${(val / maxVal) * 100}%`, backgroundColor: c.chart, opacity: 0.5 + (i / chartData.length) * 0.5 }} />
-          ))}
+      {change !== undefined && (
+        <div className={`flex items-center gap-1 mt-2 text-xs ${changeType === 'up' ? 'text-emerald-400' : 'text-red-400'}`}>
+          {changeType === 'up' ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+          <span>{change}% vs last period</span>
         </div>
       )}
     </div>
   );
 };
 
+// Mini Line Chart
+const MiniLineChart = ({ data, dataKey, color = '#8b5cf6', height = 200 }) => {
+  if (!data || data.length === 0) return null;
+  
+  const maxVal = Math.max(...data.map(d => d[dataKey]));
+  const minVal = Math.min(...data.map(d => d[dataKey]));
+  const range = maxVal - minVal || 1;
+  
+  const points = data.map((d, i) => ({
+    x: (i / (data.length - 1)) * 100,
+    y: 100 - ((d[dataKey] - minVal) / range) * 80 - 10,
+  }));
+  
+  const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+  const areaD = `${pathD} L 100 100 L 0 100 Z`;
+  
+  return (
+    <svg viewBox="0 0 100 100" className="w-full" style={{ height }} preserveAspectRatio="none">
+      <defs>
+        <linearGradient id={`gradient-${dataKey}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.3" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={areaD} fill={`url(#gradient-${dataKey})`} />
+      <path d={pathD} fill="none" stroke={color} strokeWidth="2" />
+      {points.map((p, i) => (
+        <circle key={i} cx={p.x} cy={p.y} r="1.5" fill={color} />
+      ))}
+    </svg>
+  );
+};
+
+// Bar Chart
+const BarChart = ({ data, labelKey, valueKey, color = '#8b5cf6', height = 200 }) => {
+  if (!data || data.length === 0) return null;
+  const maxVal = Math.max(...data.map(d => d[valueKey]));
+  
+  return (
+    <div className="flex items-end gap-2 justify-between" style={{ height }}>
+      {data.map((item, i) => (
+        <div key={i} className="flex-1 flex flex-col items-center gap-1">
+          <span className="text-xs text-gray-400">{item[valueKey]}</span>
+          <div 
+            className="w-full rounded-t transition-all"
+            style={{ 
+              height: `${(item[valueKey] / maxVal) * (height - 40)}px`,
+              backgroundColor: color,
+              minHeight: 4
+            }}
+          />
+          <span className="text-xs text-gray-500 truncate max-w-full">{item[labelKey]}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 // Donut Chart
-const DonutChart = ({ data, size = 140 }) => {
+const DonutChart = ({ data, size = 160 }) => {
   const total = data.reduce((sum, item) => sum + item.value, 0);
-  if (total === 0) return <div className="text-gray-600 text-center py-8">Veri yok</div>;
+  if (total === 0) return <div className="text-gray-600 text-center py-8">No data</div>;
   
   let currentAngle = -90;
   const r = 40, cx = 50, cy = 50;
   
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex items-center gap-6">
       <svg viewBox="0 0 100 100" width={size} height={size}>
         {data.map((item, idx) => {
           if (item.value === 0) return null;
@@ -117,17 +226,19 @@ const DonutChart = ({ data, size = 140 }) => {
           const x2 = cx + r * Math.cos(endRad);
           const y2 = cy + r * Math.sin(endRad);
           const largeArc = angle > 180 ? 1 : 0;
-          return <path key={idx} d={`M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`} fill={item.color} />;
+          return <path key={idx} d={`M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`} fill={item.color} className="hover:opacity-80 transition-opacity" />;
         })}
-        <circle cx={cx} cy={cy} r="28" fill="#0a0a0a" />
-        <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" fill="white" fontSize="12" fontWeight="bold">{total}</text>
+        <circle cx={cx} cy={cy} r="28" fill="#0f172a" />
+        <text x={cx} y={cy - 5} textAnchor="middle" fill="white" fontSize="14" fontWeight="bold">{total}</text>
+        <text x={cx} y={cy + 8} textAnchor="middle" fill="#64748b" fontSize="6">Total</text>
       </svg>
-      <div className="flex flex-wrap justify-center gap-3 mt-3 text-xs">
+      <div className="space-y-2">
         {data.map((item, i) => (
-          <div key={i} className="flex items-center gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-            <span className="text-gray-400">{item.label}:</span>
-            <span className="text-white">{item.value}</span>
+          <div key={i} className="flex items-center gap-2 text-sm">
+            <div className="w-3 h-3 rounded" style={{ backgroundColor: item.color }} />
+            <span className="text-gray-400">{item.label}</span>
+            <span className="text-white font-medium">{item.value}</span>
+            <span className="text-gray-500">({((item.value / total) * 100).toFixed(1)}%)</span>
           </div>
         ))}
       </div>
@@ -135,33 +246,41 @@ const DonutChart = ({ data, size = 140 }) => {
   );
 };
 
-// Progress Bar
-const ProgressBar = ({ label, value, total, color }) => {
-  const pct = total > 0 ? (value / total) * 100 : 0;
+// Status Badge
+const StatusBadge = ({ status, size = 'sm' }) => {
+  const styles = {
+    blocked: { bg: 'bg-red-500/20', text: 'text-red-400', border: 'border-red-500/30', label: 'Blocked' },
+    allowed: { bg: 'bg-emerald-500/20', text: 'text-emerald-400', border: 'border-emerald-500/30', label: 'Allowed' },
+    critical: { bg: 'bg-red-500/20', text: 'text-red-400', border: 'border-red-500/30', label: 'Critical' },
+    high: { bg: 'bg-orange-500/20', text: 'text-orange-400', border: 'border-orange-500/30', label: 'High' },
+    medium: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', border: 'border-yellow-500/30', label: 'Medium' },
+    low: { bg: 'bg-emerald-500/20', text: 'text-emerald-400', border: 'border-emerald-500/30', label: 'Low' },
+    approved: { bg: 'bg-emerald-500/20', text: 'text-emerald-400', border: 'border-emerald-500/30', label: 'Approved' },
+    pending: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', border: 'border-yellow-500/30', label: 'Pending' },
+    active: { bg: 'bg-emerald-500/20', text: 'text-emerald-400', border: 'border-emerald-500/30', label: 'Active' },
+    inactive: { bg: 'bg-gray-500/20', text: 'text-gray-400', border: 'border-gray-500/30', label: 'Inactive' },
+  };
+  const s = styles[status] || styles.low;
+  const sizeClass = size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-sm';
+  
   return (
-    <div className="space-y-1.5">
-      <div className="flex justify-between text-sm">
-        <span className="text-gray-400">{label}</span>
-        <span className="text-white">{value} <span className="text-gray-600">({Math.round(pct)}%)</span></span>
-      </div>
-      <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
-        <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: color }} />
-      </div>
-    </div>
+    <span className={`${s.bg} ${s.text} ${s.border} border rounded ${sizeClass} font-medium`}>
+      {s.label}
+    </span>
   );
 };
 
-// Risk Badge
-const RiskBadge = ({ level, score }) => {
-  const styles = {
-    critical: { bg: "#dc262620", color: "#dc2626", border: "#dc262640" },
-    high: { bg: "#ea580c20", color: "#ea580c", border: "#ea580c40" },
-    medium: { bg: "#ca8a0420", color: "#ca8a04", border: "#ca8a0440" },
-    low: { bg: "#16a34a20", color: "#16a34a", border: "#16a34a40" },
+// Risk Score Badge
+const RiskScoreBadge = ({ score }) => {
+  const getColor = () => {
+    if (score >= 70) return { bg: 'bg-red-500/20', text: 'text-red-400', border: 'border-red-500/30' };
+    if (score >= 50) return { bg: 'bg-orange-500/20', text: 'text-orange-400', border: 'border-orange-500/30' };
+    if (score >= 30) return { bg: 'bg-yellow-500/20', text: 'text-yellow-400', border: 'border-yellow-500/30' };
+    return { bg: 'bg-emerald-500/20', text: 'text-emerald-400', border: 'border-emerald-500/30' };
   };
-  const s = styles[level] || styles.low;
+  const c = getColor();
   return (
-    <span className="px-2 py-1 rounded text-xs font-medium" style={{ backgroundColor: s.bg, color: s.color, border: `1px solid ${s.border}` }}>
+    <span className={`${c.bg} ${c.text} ${c.border} border rounded px-2 py-0.5 text-xs font-mono font-bold`}>
       {score}
     </span>
   );
@@ -169,58 +288,125 @@ const RiskBadge = ({ level, score }) => {
 
 // Device Icon
 const DeviceIcon = ({ type }) => {
-  if (type === 'mobile') return <Smartphone className="h-4 w-4 text-gray-500" />;
-  if (type === 'tablet') return <Tablet className="h-4 w-4 text-gray-500" />;
-  return <Laptop className="h-4 w-4 text-gray-500" />;
+  if (type === 'mobile') return <Smartphone className="h-4 w-4 text-gray-400" />;
+  if (type === 'tablet') return <Tablet className="h-4 w-4 text-gray-400" />;
+  return <Laptop className="h-4 w-4 text-gray-400" />;
 };
 
-// Data Table
-const DataTable = ({ columns, data, title, actions, onRowAction }) => {
+// Advanced Data Table
+const DataTable = ({ 
+  columns, 
+  data, 
+  title, 
+  onExport,
+  pagination = true,
+  pageSize = 20,
+  filters,
+  onFilterChange 
+}) => {
   const [sortKey, setSortKey] = useState(null);
   const [sortDir, setSortDir] = useState('desc');
+  const [currentPage, setCurrentPage] = useState(1);
   const [search, setSearch] = useState('');
   
-  const filtered = data.filter(row => Object.values(row).some(val => String(val).toLowerCase().includes(search.toLowerCase())));
-  const sorted = sortKey ? [...filtered].sort((a, b) => {
-    const aVal = a[sortKey], bVal = b[sortKey];
-    const mod = sortDir === 'asc' ? 1 : -1;
-    return typeof aVal === 'number' ? (aVal - bVal) * mod : String(aVal).localeCompare(String(bVal)) * mod;
-  }) : filtered;
+  const handleSort = (key) => {
+    if (sortKey === key) {
+      setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDir('desc');
+    }
+  };
+  
+  const filtered = useMemo(() => {
+    let result = [...data];
+    if (search) {
+      result = result.filter(row => 
+        Object.values(row).some(val => 
+          String(val).toLowerCase().includes(search.toLowerCase())
+        )
+      );
+    }
+    return result;
+  }, [data, search]);
+  
+  const sorted = useMemo(() => {
+    if (!sortKey) return filtered;
+    return [...filtered].sort((a, b) => {
+      const aVal = a[sortKey];
+      const bVal = b[sortKey];
+      const mod = sortDir === 'asc' ? 1 : -1;
+      if (typeof aVal === 'number') return (aVal - bVal) * mod;
+      return String(aVal).localeCompare(String(bVal)) * mod;
+    });
+  }, [filtered, sortKey, sortDir]);
+  
+  const totalPages = Math.ceil(sorted.length / pageSize);
+  const paginatedData = pagination ? sorted.slice((currentPage - 1) * pageSize, currentPage * pageSize) : sorted;
   
   return (
-    <div className="bg-[#0a0a0a] border border-gray-800 rounded-xl overflow-hidden">
-      <div className="p-4 border-b border-gray-800 flex items-center justify-between">
-        <h3 className="font-semibold text-white">{title}</h3>
+    <div className="bg-slate-900/50 border border-slate-700/50 rounded-xl overflow-hidden">
+      {/* Header */}
+      <div className="p-4 border-b border-slate-700/50 flex items-center justify-between flex-wrap gap-4">
+        <div className="flex items-center gap-4">
+          <h3 className="font-semibold text-white">{title}</h3>
+          <span className="text-sm text-gray-500">{formatNumber(sorted.length)} records</span>
+        </div>
         <div className="flex items-center gap-3">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-600" />
-            <input type="text" placeholder="Ara..." value={search} onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 pr-4 py-2 bg-black border border-gray-800 rounded-lg text-sm text-white w-48 focus:border-gray-700 outline-none" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+            <input
+              type="text"
+              placeholder="Search..."
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+              className="pl-9 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white w-64 focus:border-purple-500 outline-none"
+            />
           </div>
-          {actions}
+          {onExport && (
+            <button onClick={onExport} className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-sm font-medium text-white">
+              <Download className="h-4 w-4" /> Export
+            </button>
+          )}
         </div>
       </div>
+      
+      {/* Filters */}
+      {filters && (
+        <div className="p-4 border-b border-slate-700/50 flex items-center gap-4 flex-wrap bg-slate-800/30">
+          <Filter className="h-4 w-4 text-gray-500" />
+          {filters}
+        </div>
+      )}
+      
+      {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-black/50">
+          <thead className="bg-slate-800/50">
             <tr>
               {columns.map((col) => (
-                <th key={col.key} onClick={() => col.sortable && (setSortKey(col.key), setSortDir(sortKey === col.key && sortDir === 'desc' ? 'asc' : 'desc'))}
-                  className={`px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase ${col.sortable ? 'cursor-pointer hover:text-gray-400' : ''}`}>
+                <th
+                  key={col.key}
+                  onClick={() => col.sortable !== false && handleSort(col.key)}
+                  className={`px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider whitespace-nowrap ${col.sortable !== false ? 'cursor-pointer hover:text-gray-200' : ''}`}
+                  style={{ width: col.width }}
+                >
                   <div className="flex items-center gap-1">
                     {col.label}
-                    {col.sortable && sortKey === col.key && (sortDir === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
+                    {col.sortable !== false && sortKey === col.key && (
+                      sortDir === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />
+                    )}
                   </div>
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-800/50">
-            {sorted.map((row, i) => (
-              <tr key={i} className="hover:bg-white/[0.02]">
+          <tbody className="divide-y divide-slate-700/50">
+            {paginatedData.map((row, rowIdx) => (
+              <tr key={row.id || rowIdx} className="hover:bg-slate-800/30 transition-colors">
                 {columns.map((col) => (
-                  <td key={col.key} className="px-4 py-3 text-sm">
-                    {col.render ? col.render(row[col.key], row, onRowAction) : row[col.key]}
+                  <td key={col.key} className="px-4 py-3 text-sm whitespace-nowrap">
+                    {col.render ? col.render(row[col.key], row) : row[col.key]}
                   </td>
                 ))}
               </tr>
@@ -228,660 +414,669 @@ const DataTable = ({ columns, data, title, actions, onRowAction }) => {
           </tbody>
         </table>
       </div>
-      {sorted.length === 0 && <div className="p-8 text-center text-gray-600">Veri bulunamadı</div>}
+      
+      {paginatedData.length === 0 && (
+        <div className="p-8 text-center text-gray-500">No data found</div>
+      )}
+      
+      {/* Pagination */}
+      {pagination && totalPages > 1 && (
+        <div className="p-4 border-t border-slate-700/50 flex items-center justify-between">
+          <span className="text-sm text-gray-500">
+            Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, sorted.length)} of {sorted.length}
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              let pageNum;
+              if (totalPages <= 5) {
+                pageNum = i + 1;
+              } else if (currentPage <= 3) {
+                pageNum = i + 1;
+              } else if (currentPage >= totalPages - 2) {
+                pageNum = totalPages - 4 + i;
+              } else {
+                pageNum = currentPage - 2 + i;
+              }
+              return (
+                <button
+                  key={pageNum}
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={`px-3 py-1 rounded-lg text-sm ${currentPage === pageNum ? 'bg-purple-600 text-white' : 'bg-slate-800 hover:bg-slate-700 text-gray-300'}`}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+
+// Select Component
+const Select = ({ options, value, onChange, placeholder, className = '' }) => (
+  <select
+    value={value}
+    onChange={(e) => onChange(e.target.value)}
+    className={`px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:border-purple-500 outline-none ${className}`}
+  >
+    <option value="">{placeholder}</option>
+    {options.map((opt) => (
+      <option key={opt.value} value={opt.value}>{opt.label}</option>
+    ))}
+  </select>
+);
 
 // ==================== PAGES ====================
 
-// Landing Page - Siyah
-const LandingPage = ({ onLogin, onRegister }) => (
-  <div className="min-h-screen bg-black text-white">
-    <nav className="flex items-center justify-between px-8 py-5 max-w-7xl mx-auto">
-      <div className="flex items-center gap-2">
-        <Shield className="h-8 w-8 text-blue-500" />
-        <span className="text-xl font-bold">AdsKalkan</span>
-      </div>
-      <div className="flex items-center gap-3">
-        <button onClick={onLogin} className="px-4 py-2 text-gray-400 hover:text-white">Giriş</button>
-        <button onClick={onRegister} className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg font-medium">Başla</button>
-      </div>
-    </nav>
-    
-    <header className="max-w-5xl mx-auto px-8 py-16 text-center">
-      <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-600/10 border border-blue-600/30 rounded-full text-blue-400 text-sm mb-6">
-        <Zap className="h-4 w-4" /> AI Koruma <LivePulse />
-      </div>
-      <h1 className="text-5xl font-bold mb-5">
-        Google Ads Bütçenizi<br/>
-        <span className="text-blue-500">Sahte Tıklamalardan</span> Koruyun
-      </h1>
-      <p className="text-lg text-gray-500 max-w-2xl mx-auto mb-8">
-        Gelişmiş AI ile bot trafiğini, click farm saldırılarını gerçek zamanlı tespit edin.
-      </p>
-      <div className="flex gap-3 justify-center">
-        <button onClick={onRegister} className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 rounded-lg font-medium flex items-center gap-2">
-          <Play className="h-4 w-4" /> Canlı Demo
-        </button>
-        <button className="px-5 py-2.5 bg-white/5 hover:bg-white/10 border border-gray-800 rounded-lg font-medium flex items-center gap-2">
-          <Phone className="h-4 w-4" /> İletişim
-        </button>
-      </div>
-      
-      <div className="grid grid-cols-4 gap-4 max-w-3xl mx-auto mt-12">
-        {[
-          { icon: Bot, value: "10M+", label: "Engellenen Bot", color: "#dc2626" },
-          { icon: Users, value: "500+", label: "Müşteri", color: "#2563eb" },
-          { icon: ShieldCheck, value: "%99.9", label: "Doğruluk", color: "#16a34a" },
-          { icon: CircleDollarSign, value: "₺2.5M", label: "Tasarruf", color: "#ca8a04" },
-        ].map((s, i) => (
-          <div key={i} className="p-4 rounded-xl bg-gray-900/50 border border-gray-800">
-            <s.icon className="h-6 w-6 mb-2 mx-auto" style={{ color: s.color }} />
-            <div className="text-xl font-bold">{s.value}</div>
-            <div className="text-xs text-gray-500">{s.label}</div>
-          </div>
-        ))}
-      </div>
-    </header>
-  </div>
-);
-
 // Login Page
-const LoginPage = ({ onBack, onSuccess }) => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+const LoginPage = ({ onSuccess }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
+    setError('');
     try {
       const res = await axios.post(`${API}/auth/login`, { email, password });
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("user", JSON.stringify(res.data.user));
+      localStorage.setItem('token', res.data.token);
+      localStorage.setItem('user', JSON.stringify(res.data.user));
       onSuccess(res.data.user);
     } catch (err) {
-      setError(err.response?.data?.detail || "Giriş başarısız");
+      setError(err.response?.data?.detail || 'Login failed');
     } finally {
       setLoading(false);
     }
   };
   
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-[#0a0a0a] border border-gray-800 rounded-xl p-6">
-        <button onClick={onBack} className="text-gray-500 hover:text-white mb-4 flex items-center gap-1 text-sm">
-          <ChevronLeft className="h-4 w-4" /> Geri
-        </button>
-        <div className="flex items-center gap-2 mb-6">
-          <Shield className="h-7 w-7 text-blue-500" />
-          <span className="text-lg font-bold text-white">AdsKalkan</span>
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <Shield className="h-10 w-10 text-purple-500" />
+            <span className="text-2xl font-bold text-white">AdsKalkan</span>
+          </div>
+          <p className="text-gray-400">Admin Dashboard</p>
         </div>
-        <h1 className="text-xl font-bold text-white mb-1">Giriş Yap</h1>
-        <p className="text-gray-500 text-sm mb-5">Hesabınıza giriş yapın</p>
-        {error && <div className="bg-red-600/10 border border-red-600/30 text-red-500 px-3 py-2 rounded-lg mb-4 text-sm">{error}</div>}
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" required
-            className="w-full px-4 py-2.5 bg-black border border-gray-800 rounded-lg text-white text-sm focus:border-gray-700 outline-none" />
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Şifre" required
-            className="w-full px-4 py-2.5 bg-black border border-gray-800 rounded-lg text-white text-sm focus:border-gray-700 outline-none" />
-          <button type="submit" disabled={loading} className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 rounded-lg font-medium text-white text-sm disabled:opacity-50">
-            {loading ? "..." : "Giriş Yap"}
-          </button>
-        </form>
+        
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+          <h2 className="text-xl font-semibold text-white mb-6">Sign In</h2>
+          {error && <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg mb-4 text-sm">{error}</div>}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm text-gray-400 mb-2">Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white focus:border-purple-500 outline-none"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-400 mb-2">Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white focus:border-purple-500 outline-none"
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 rounded-lg font-medium text-white disabled:opacity-50"
+            >
+              {loading ? 'Signing in...' : 'Sign In'}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );
 };
 
-// Register Page
-const RegisterPage = ({ onBack }) => {
-  const [form, setForm] = useState({ email: "", password: "", full_name: "", company_name: "" });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
-  
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      await axios.post(`${API}/auth/register`, form);
-      setSuccess(true);
-    } catch (err) {
-      setError(err.response?.data?.detail || "Kayıt başarısız");
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  if (success) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center p-4">
-        <div className="text-center bg-[#0a0a0a] border border-gray-800 rounded-xl p-6 max-w-md">
-          <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-3" />
-          <h2 className="text-xl font-bold text-white mb-2">Kayıt Başarılı!</h2>
-          <p className="text-gray-500 text-sm mb-4">Yönetici onayından sonra giriş yapabilirsiniz.</p>
-          <button onClick={onBack} className="px-5 py-2 bg-blue-600 rounded-lg text-sm text-white">Giriş'e Dön</button>
-        </div>
-      </div>
-    );
-  }
-  
-  return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-[#0a0a0a] border border-gray-800 rounded-xl p-6">
-        <button onClick={onBack} className="text-gray-500 hover:text-white mb-4 flex items-center gap-1 text-sm">
-          <ChevronLeft className="h-4 w-4" /> Geri
-        </button>
-        <h1 className="text-xl font-bold text-white mb-1">Kayıt Ol</h1>
-        <p className="text-gray-500 text-sm mb-5">7 gün ücretsiz</p>
-        {error && <div className="bg-red-600/10 border border-red-600/30 text-red-500 px-3 py-2 rounded-lg mb-4 text-sm">{error}</div>}
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <input type="text" value={form.full_name} onChange={(e) => setForm({...form, full_name: e.target.value})} placeholder="Ad Soyad *" required className="w-full px-4 py-2.5 bg-black border border-gray-800 rounded-lg text-white text-sm focus:border-gray-700 outline-none" />
-          <input type="text" value={form.company_name} onChange={(e) => setForm({...form, company_name: e.target.value})} placeholder="Şirket" className="w-full px-4 py-2.5 bg-black border border-gray-800 rounded-lg text-white text-sm focus:border-gray-700 outline-none" />
-          <input type="email" value={form.email} onChange={(e) => setForm({...form, email: e.target.value})} placeholder="Email *" required className="w-full px-4 py-2.5 bg-black border border-gray-800 rounded-lg text-white text-sm focus:border-gray-700 outline-none" />
-          <input type="password" value={form.password} onChange={(e) => setForm({...form, password: e.target.value})} placeholder="Şifre *" required minLength={6} className="w-full px-4 py-2.5 bg-black border border-gray-800 rounded-lg text-white text-sm focus:border-gray-700 outline-none" />
-          <button type="submit" disabled={loading} className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 rounded-lg font-medium text-white text-sm disabled:opacity-50">
-            {loading ? "..." : "Kayıt Ol"}
-          </button>
-        </form>
-      </div>
-    </div>
-  );
-};
-
-// ==================== ADMIN DASHBOARD ====================
+// Main Admin Dashboard
 const AdminDashboard = ({ user, onLogout }) => {
-  const [tab, setTab] = useState("dashboard");
-  const [collapsed, setCollapsed] = useState(false);
-  const [data, setData] = useState(null);
-  const [visitors, setVisitors] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [pools, setPools] = useState([]);
-  const [sites, setSites] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [dateRange, setDateRange] = useState('7d');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   
-  // Filters for live monitoring
-  const [filters, setFilters] = useState({ site: '', city: '', riskLevel: '', blocked: '' });
-  
-  const fetchAll = useCallback(async () => {
-    try {
-      const [d, v, u, p, s] = await Promise.all([
-        api.get("/admin/dashboard"),
-        api.get("/admin/visitors?limit=200"),
-        api.get("/admin/users"),
-        api.get("/admin/pools"),
-        api.get("/admin/sites"),
-      ]);
-      setData(d.data);
-      setVisitors(v.data.visitors || []);
-      setUsers(u.data || []);
-      setPools(p.data || []);
-      setSites(s.data || []);
-    } catch (err) { console.error(err); }
-    finally { setLoading(false); }
-  }, []);
-  
-  useEffect(() => {
-    fetchAll();
-    const interval = setInterval(fetchAll, 30000);
-    return () => clearInterval(interval);
-  }, [fetchAll]);
-  
-  // Block IP manually
-  const handleBlockIP = async (ip, siteId) => {
-    try {
-      await api.post("/admin/blocked-ips", { ip_address: ip, reason: "Manuel engel", is_global: true });
-      alert(`${ip} engellendi!`);
-      fetchAll();
-    } catch (err) {
-      alert("Hata: " + (err.response?.data?.detail || err.message));
-    }
-  };
-  
-  const handleApproveUser = async (id) => {
-    try { await api.put(`/admin/users/${id}/approve`); fetchAll(); } catch (err) { console.error(err); }
-  };
-  
-  const menu = [
-    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { id: "sites", label: "Siteler", icon: Globe },
-    { id: "visitors", label: "Ziyaretçiler", icon: Eye },
-    { id: "live", label: "Canlı İzleme", icon: Activity },
-    { id: "users", label: "Kullanıcılar", icon: Users },
-    { id: "pools", label: "Havuzlar", icon: Layers },
-    { id: "blocked", label: "Engellenenler", icon: Ban },
-    { id: "settings", label: "Ayarlar", icon: Settings },
-  ];
-  
-  const riskData = data ? [
-    { label: "Düşük", value: data.risk_distribution?.low || 0, color: "#16a34a" },
-    { label: "Orta", value: data.risk_distribution?.medium || 0, color: "#ca8a04" },
-    { label: "Yüksek", value: data.risk_distribution?.high || 0, color: "#ea580c" },
-    { label: "Kritik", value: data.risk_distribution?.critical || 0, color: "#dc2626" },
-  ] : [];
-  
-  const totalPoolBlocked = pools.reduce((s, p) => s + (p.blocked_ips?.length || 0), 0);
-  const savings = data ? (data.blocked_visitors * 2.5) : 0;
-  
-  // Filter visitors for live view
-  const filteredVisitors = visitors.filter(v => {
-    if (filters.site && v.site_id !== filters.site) return false;
-    if (filters.city && !v.city?.toLowerCase().includes(filters.city.toLowerCase())) return false;
-    if (filters.riskLevel && v.risk_level !== filters.riskLevel) return false;
-    if (filters.blocked === 'true' && !v.is_blocked) return false;
-    if (filters.blocked === 'false' && v.is_blocked) return false;
-    return true;
+  // Filter states
+  const [visitorFilters, setVisitorFilters] = useState({
+    site: '',
+    city: '',
+    device: '',
+    riskLevel: '',
+    status: '',
   });
   
-  // Get site name by ID
-  const getSiteName = (siteId) => {
-    const site = sites.find(s => s.id === siteId);
-    return site ? site.name : '-';
+  const isSuperAdmin = user?.role === 'super_admin' || user?.role === 'admin_helper';
+  
+  // Calculate stats
+  const stats = useMemo(() => {
+    const totalVisitors = MOCK_VISITORS.length;
+    const blockedVisitors = MOCK_VISITORS.filter(v => v.is_blocked).length;
+    const protectionRate = ((blockedVisitors / totalVisitors) * 100).toFixed(1);
+    const activeSites = MOCK_SITES.filter(s => s.is_active).length;
+    const activePools = MOCK_POOLS.filter(p => p.is_active).length;
+    const blockedIPs = new Set(MOCK_VISITORS.filter(v => v.is_blocked).map(v => v.ip_address)).size;
+    
+    return { totalVisitors, blockedVisitors, protectionRate, activeSites, activePools, blockedIPs };
+  }, []);
+  
+  // Risk distribution
+  const riskDistribution = useMemo(() => {
+    const counts = { low: 0, medium: 0, high: 0, critical: 0 };
+    MOCK_VISITORS.forEach(v => counts[v.risk_level]++);
+    return [
+      { label: 'Low', value: counts.low, color: '#22c55e' },
+      { label: 'Medium', value: counts.medium, color: '#eab308' },
+      { label: 'High', value: counts.high, color: '#f97316' },
+      { label: 'Critical', value: counts.critical, color: '#ef4444' },
+    ];
+  }, []);
+  
+  // City stats
+  const cityStats = useMemo(() => {
+    const counts = {};
+    MOCK_VISITORS.filter(v => v.is_blocked).forEach(v => {
+      counts[v.city] = (counts[v.city] || 0) + 1;
+    });
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([city, count]) => ({ city, count }));
+  }, []);
+  
+  // Device stats
+  const deviceStats = useMemo(() => {
+    const counts = { desktop: 0, mobile: 0, tablet: 0 };
+    MOCK_VISITORS.forEach(v => counts[v.device_type]++);
+    return [
+      { device: 'Desktop', count: counts.desktop },
+      { device: 'Mobile', count: counts.mobile },
+      { device: 'Tablet', count: counts.tablet },
+    ];
+  }, []);
+  
+  // Filtered visitors
+  const filteredVisitors = useMemo(() => {
+    return MOCK_VISITORS.filter(v => {
+      if (visitorFilters.site && v.site_id !== visitorFilters.site) return false;
+      if (visitorFilters.city && v.city !== visitorFilters.city) return false;
+      if (visitorFilters.device && v.device_type !== visitorFilters.device) return false;
+      if (visitorFilters.riskLevel && v.risk_level !== visitorFilters.riskLevel) return false;
+      if (visitorFilters.status === 'blocked' && !v.is_blocked) return false;
+      if (visitorFilters.status === 'allowed' && v.is_blocked) return false;
+      return true;
+    });
+  }, [visitorFilters]);
+  
+  const handleExport = () => {
+    alert('Export functionality - CSV/Excel download would be triggered here');
   };
   
-  // Visitor columns with site info
-  const visitorCols = [
-    { key: 'ip_address', label: 'IP', sortable: true, render: (v) => <span className="font-mono text-white text-xs">{v}</span> },
-    { key: 'site_id', label: 'Site', sortable: true, render: (v) => <span className="text-blue-400 text-xs">{getSiteName(v)}</span> },
-    { key: 'city', label: 'Şehir', sortable: true, render: (v) => <span className="text-gray-400 text-xs">{v || '-'}</span> },
-    { key: 'country', label: 'Ülke', sortable: true, render: (v) => <span className="text-gray-400 text-xs">{v || '-'}</span> },
-    { key: 'device_type', label: 'Cihaz', sortable: true, render: (v) => <div className="flex items-center gap-1"><DeviceIcon type={v} /><span className="text-gray-400 text-xs">{v || '-'}</span></div> },
-    { key: 'device_brand', label: 'Marka', sortable: true, render: (v, r) => <span className="text-gray-400 text-xs">{v || '-'} {r.device_model || ''}</span> },
-    { key: 'browser', label: 'Tarayıcı', sortable: true, render: (v) => <span className="text-gray-400 text-xs">{v || '-'}</span> },
-    { key: 'os', label: 'OS', sortable: true, render: (v) => <span className="text-gray-400 text-xs">{v || '-'}</span> },
-    { key: 'time_on_page', label: 'Süre', sortable: true, render: (v) => <span className="text-gray-400 text-xs">{v || 0}s</span> },
-    { key: 'risk_score', label: 'Risk', sortable: true, render: (v, r) => <RiskBadge level={r.risk_level} score={Math.round(v)} /> },
-    { key: 'is_blocked', label: 'Durum', sortable: true, render: (v) => v ? <span className="text-red-500 text-xs flex items-center gap-1"><Ban className="h-3 w-3" />Engel</span> : <span className="text-green-500 text-xs flex items-center gap-1"><CheckCircle className="h-3 w-3" />İzin</span> },
-    { key: 'created_at', label: 'Tarih', sortable: true, render: (v) => <span className="text-gray-600 text-xs">{new Date(v).toLocaleString('tr-TR')}</span> },
-    { key: 'actions', label: '', render: (_, r, onAction) => !r.is_blocked && (
-      <button onClick={() => onAction && onAction('block', r)} className="px-2 py-1 bg-red-600/20 hover:bg-red-600/30 text-red-500 rounded text-xs flex items-center gap-1">
-        <Ban className="h-3 w-3" /> Engelle
-      </button>
-    )},
+  // Visitor table columns
+  const visitorColumns = [
+    { key: 'created_at', label: 'Date & Time', sortable: true, width: '140px', render: (v) => <span className="text-gray-400 text-xs">{formatDate(v)}</span> },
+    { key: 'site_name', label: 'Site', sortable: true, render: (v) => <span className="text-purple-400 font-medium">{v}</span> },
+    { key: 'domain', label: 'Domain', sortable: true, render: (v) => <span className="text-gray-400">{v}</span> },
+    { key: 'ip_address', label: 'IP Address', sortable: true, render: (v) => <span className="font-mono text-white">{v}</span> },
+    { key: 'city', label: 'City', sortable: true, render: (v, r) => <span className="text-gray-400">{v}, {r.country}</span> },
+    { key: 'device_type', label: 'Device', sortable: true, render: (v) => <div className="flex items-center gap-2"><DeviceIcon type={v} /><span className="text-gray-400 capitalize">{v}</span></div> },
+    { key: 'browser', label: 'Browser', sortable: true, render: (v, r) => <span className="text-gray-400">{v} / {r.os}</span> },
+    { key: 'time_on_page', label: 'Time', sortable: true, render: (v) => <span className="text-gray-400">{v}s</span> },
+    { key: 'risk_score', label: 'Risk Score', sortable: true, render: (v) => <RiskScoreBadge score={v} /> },
+    { key: 'risk_level', label: 'Risk Level', sortable: true, render: (v) => <StatusBadge status={v} /> },
+    { key: 'is_blocked', label: 'Status', sortable: true, render: (v) => <StatusBadge status={v ? 'blocked' : 'allowed'} /> },
   ];
   
-  const siteCols = [
-    { key: 'name', label: 'Site Adı', sortable: true, render: (v) => <span className="text-white font-medium">{v}</span> },
-    { key: 'domain', label: 'Domain', sortable: true, render: (v) => <span className="text-blue-400">{v}</span> },
-    { key: 'total_visitors', label: 'Tıklama', sortable: true, render: (v) => <span className="text-white">{v}</span> },
-    { key: 'blocked_clicks', label: 'Engellenen', sortable: true, render: (v) => <span className="text-red-400">{v}</span> },
-    { key: 'block_rate', label: 'Oran', sortable: true, render: (v) => <span className={parseFloat(v) > 50 ? 'text-red-400' : parseFloat(v) > 20 ? 'text-orange-400' : 'text-green-400'}>%{v}</span> },
+  // Site table columns
+  const siteColumns = [
+    { key: 'name', label: 'Site Name', sortable: true, render: (v) => <span className="text-white font-medium">{v}</span> },
+    { key: 'domain', label: 'Domain', sortable: true, render: (v) => <span className="text-purple-400">{v}</span> },
+    { key: 'pool', label: 'Pool', sortable: true, render: (v) => <span className="text-gray-400">{v}</span> },
+    { key: 'total_visitors', label: 'Total Visitors', sortable: true, render: (v) => <span className="text-white">{formatNumber(v)}</span> },
+    { key: 'blocked_visitors', label: 'Blocked', sortable: true, render: (v) => <span className="text-red-400">{formatNumber(v)}</span> },
+    { key: 'protection_rate', label: 'Protection %', sortable: true, render: (v) => <span className={`font-medium ${v > 25 ? 'text-red-400' : v > 15 ? 'text-orange-400' : 'text-emerald-400'}`}>{v}%</span> },
+    { key: 'last_activity', label: 'Last Activity', sortable: true, render: (v) => <span className="text-gray-500 text-xs">{formatDateShort(v)}</span> },
+    { key: 'is_active', label: 'Status', sortable: true, render: (v) => <StatusBadge status={v ? 'active' : 'inactive'} /> },
   ];
   
-  const siteStats = sites.map(s => ({
-    ...s,
-    block_rate: s.total_visitors > 0 ? ((s.blocked_clicks / s.total_visitors) * 100).toFixed(1) : '0',
-  }));
+  // Pool table columns
+  const poolColumns = [
+    { key: 'name', label: 'Pool Name', sortable: true, render: (v) => <span className="text-white font-medium">{v}</span> },
+    { key: 'sector', label: 'Sector', sortable: true, render: (v) => <span className="text-purple-400">{v}</span> },
+    { key: 'city', label: 'City', sortable: true, render: (v) => <span className="text-gray-400">{v}</span> },
+    { key: 'sites_count', label: 'Sites', sortable: true, render: (v) => <span className="text-white">{v}</span> },
+    { key: 'blocked_ips', label: 'Blocked IPs', sortable: true, render: (v) => <span className="text-orange-400">{formatNumber(v)}</span> },
+    { key: 'blocked_clicks', label: 'Blocked Clicks', sortable: true, render: (v) => <span className="text-red-400">{formatNumber(v)}</span> },
+    { key: 'is_active', label: 'Status', sortable: true, render: (v) => <StatusBadge status={v ? 'active' : 'inactive'} /> },
+  ];
+  
+  // User table columns
+  const userColumns = [
+    { key: 'full_name', label: 'Name', sortable: true, render: (v, r) => <div><span className="text-white font-medium">{v}</span><br/><span className="text-gray-500 text-xs">{r.email}</span></div> },
+    { key: 'company', label: 'Company', sortable: true, render: (v) => <span className="text-gray-400">{v}</span> },
+    { key: 'role', label: 'Role', sortable: true, render: (v) => <span className={`px-2 py-1 rounded text-xs ${v === 'super_admin' ? 'bg-purple-500/20 text-purple-400' : 'bg-blue-500/20 text-blue-400'}`}>{v === 'super_admin' ? 'Super Admin' : 'Customer'}</span> },
+    { key: 'sites_count', label: 'Sites', sortable: true, render: (v) => <span className="text-white">{v}</span> },
+    { key: 'status', label: 'Status', sortable: true, render: (v) => <StatusBadge status={v} /> },
+    { key: 'created_at', label: 'Joined', sortable: true, render: (v) => <span className="text-gray-500 text-xs">{formatDateShort(v)}</span> },
+  ];
+  
+  const menuItems = [
+    { id: 'dashboard', label: 'Dashboard', icon: Home },
+    { id: 'sites', label: 'Sites', icon: Globe },
+    { id: 'pools', label: 'Pools', icon: Layers },
+    { id: 'visitors', label: 'Visitors', icon: Eye },
+    { id: 'blocked', label: 'Blocked IPs', icon: Ban },
+    { id: 'reports', label: 'Reports', icon: FileText },
+    { id: 'settings', label: 'Settings', icon: Settings },
+  ];
+  
+  const superAdminMenuItems = [
+    { id: 'users', label: 'Users', icon: Users },
+    { id: 'packages', label: 'Packages', icon: Package },
+    { id: 'campaigns', label: 'Campaigns', icon: Megaphone },
+    { id: 'system', label: 'System Logs', icon: Server },
+  ];
   
   return (
-    <div className="min-h-screen bg-black text-white flex">
+    <div className="min-h-screen bg-slate-950 text-white flex">
       {/* Sidebar */}
-      <aside className={`${collapsed ? 'w-14' : 'w-52'} bg-[#0a0a0a] border-r border-gray-800 flex flex-col transition-all flex-shrink-0`}>
-        <div className="p-3 border-b border-gray-800 flex items-center gap-2">
-          <Shield className="h-6 w-6 text-blue-500 flex-shrink-0" />
-          {!collapsed && <span className="font-bold text-sm">AdsKalkan</span>}
+      <aside className={`${sidebarCollapsed ? 'w-16' : 'w-60'} bg-slate-900 border-r border-slate-800 flex flex-col transition-all duration-300 flex-shrink-0`}>
+        {/* Logo */}
+        <div className="p-4 border-b border-slate-800 flex items-center gap-3">
+          <Shield className="h-8 w-8 text-purple-500 flex-shrink-0" />
+          {!sidebarCollapsed && <span className="text-lg font-bold">AdsKalkan</span>}
         </div>
-        <nav className="flex-1 p-2 space-y-0.5">
-          {menu.map((m) => (
-            <button key={m.id} onClick={() => setTab(m.id)}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all ${tab === m.id ? 'bg-blue-600/20 text-blue-400' : 'text-gray-500 hover:bg-white/5 hover:text-gray-300'}`}>
-              <m.icon className="h-4 w-4 flex-shrink-0" />
-              {!collapsed && <span>{m.label}</span>}
+        
+        {/* Navigation */}
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+          {menuItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
+                activeTab === item.id
+                  ? 'bg-gradient-to-r from-purple-600/20 to-blue-600/20 text-white border border-purple-500/30'
+                  : 'text-gray-400 hover:bg-slate-800 hover:text-white'
+              }`}
+            >
+              <item.icon className="h-5 w-5 flex-shrink-0" />
+              {!sidebarCollapsed && <span className="text-sm">{item.label}</span>}
             </button>
           ))}
+          
+          {isSuperAdmin && (
+            <>
+              <div className="pt-4 pb-2">
+                {!sidebarCollapsed && <span className="text-xs text-gray-500 uppercase tracking-wider px-3">Super Admin</span>}
+              </div>
+              {superAdminMenuItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
+                    activeTab === item.id
+                      ? 'bg-gradient-to-r from-purple-600/20 to-blue-600/20 text-white border border-purple-500/30'
+                      : 'text-gray-400 hover:bg-slate-800 hover:text-white'
+                  }`}
+                >
+                  <item.icon className="h-5 w-5 flex-shrink-0" />
+                  {!sidebarCollapsed && <span className="text-sm">{item.label}</span>}
+                </button>
+              ))}
+            </>
+          )}
         </nav>
-        <div className="p-2 border-t border-gray-800">
-          <button onClick={() => setCollapsed(!collapsed)} className="w-full flex items-center justify-center p-2 text-gray-500 hover:text-gray-300 rounded-lg hover:bg-white/5">
-            {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-          </button>
-          <button onClick={onLogout} className="w-full flex items-center gap-2 px-3 py-2 text-gray-500 hover:text-red-400 rounded-lg hover:bg-red-600/10 mt-1">
-            <LogOut className="h-4 w-4 flex-shrink-0" />
-            {!collapsed && <span className="text-sm">Çıkış</span>}
+        
+        {/* Collapse Button */}
+        <div className="p-3 border-t border-slate-800">
+          <button
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className="w-full flex items-center justify-center p-2 text-gray-400 hover:text-white rounded-lg hover:bg-slate-800"
+          >
+            {sidebarCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
           </button>
         </div>
       </aside>
       
-      {/* Main */}
-      <main className="flex-1 overflow-auto">
-        {/* Header */}
-        <header className="bg-[#0a0a0a]/90 backdrop-blur border-b border-gray-800 px-5 py-3 sticky top-0 z-10">
-          <div className="flex items-center justify-between">
-            <h1 className="font-semibold">{menu.find(m => m.id === tab)?.label}</h1>
-            <div className="flex items-center gap-3">
-              <button onClick={fetchAll} className="p-1.5 hover:bg-white/5 rounded-lg text-gray-500 hover:text-white">
-                <RefreshCw className="h-4 w-4" />
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Top Header */}
+        <header className="bg-slate-900/80 backdrop-blur-xl border-b border-slate-800 px-6 py-3 flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center gap-4">
+            <h1 className="text-lg font-semibold">{menuItems.find(m => m.id === activeTab)?.label || superAdminMenuItems.find(m => m.id === activeTab)?.label || 'Dashboard'}</h1>
+            <span className={`px-2 py-1 rounded text-xs font-medium ${isSuperAdmin ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'}`}>
+              {isSuperAdmin ? 'Super Admin' : 'Admin'}
+            </span>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            {/* Date Range Selector */}
+            <div className="flex items-center gap-2 px-3 py-2 bg-slate-800 rounded-lg border border-slate-700">
+              <Calendar className="h-4 w-4 text-gray-400" />
+              <select
+                value={dateRange}
+                onChange={(e) => setDateRange(e.target.value)}
+                className="bg-transparent text-sm text-white outline-none"
+              >
+                <option value="today">Today</option>
+                <option value="7d">Last 7 days</option>
+                <option value="30d">Last 30 days</option>
+                <option value="90d">Last 90 days</option>
+                <option value="custom">Custom</option>
+              </select>
+            </div>
+            
+            {/* Export Button */}
+            <button
+              onClick={handleExport}
+              className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 text-sm"
+            >
+              <Download className="h-4 w-4" />
+              Export
+            </button>
+            
+            {/* Refresh */}
+            <button className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700">
+              <RefreshCw className="h-4 w-4" />
+            </button>
+            
+            {/* User Menu */}
+            <div className="flex items-center gap-3 pl-4 border-l border-slate-700">
+              <div className="text-right">
+                <p className="text-sm font-medium">{user?.full_name}</p>
+                <p className="text-xs text-gray-500">{user?.email}</p>
+              </div>
+              <button
+                onClick={onLogout}
+                className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg"
+              >
+                <LogOut className="h-5 w-5" />
               </button>
-              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-red-600/10 border border-red-600/30 rounded-full">
-                <LivePulse />
-                <span className="text-xs text-red-400">Canlı</span>
-              </div>
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-white/5 rounded-lg text-sm">
-                <User className="h-4 w-4 text-gray-500" />
-                <span className="text-gray-300 text-xs">{user?.full_name}</span>
-              </div>
             </div>
           </div>
         </header>
         
-        <div className="p-5">
-          {loading ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div>
+        {/* Content Area */}
+        <main className="flex-1 overflow-auto p-6">
+          {/* Dashboard */}
+          {activeTab === 'dashboard' && (
+            <div className="space-y-6">
+              {/* KPI Cards */}
+              <div className="grid grid-cols-6 gap-4">
+                <KPICard title="Total Visitors" value={formatNumber(stats.totalVisitors)} icon={Eye} color="blue" change={12.5} changeType="up" />
+                <KPICard title="Blocked Clicks" value={formatNumber(stats.blockedVisitors)} icon={Ban} color="red" change={8.3} changeType="up" />
+                <KPICard title="Protection Rate" value={`${stats.protectionRate}%`} icon={Shield} color="green" subtitle="of traffic blocked" />
+                <KPICard title="Active Sites" value={stats.activeSites} icon={Globe} color="purple" />
+                <KPICard title="Active Pools" value={stats.activePools} icon={Layers} color="cyan" />
+                <KPICard title="Blocked IPs" value={formatNumber(stats.blockedIPs)} icon={AlertTriangle} color="orange" />
+              </div>
+              
+              {/* Charts Row */}
+              <div className="grid grid-cols-3 gap-6">
+                {/* Line Chart - Visitors vs Blocked */}
+                <div className="col-span-2 bg-slate-900/50 border border-slate-700/50 rounded-xl p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold flex items-center gap-2">
+                      <Activity className="h-5 w-5 text-purple-400" />
+                      Visitors vs Blocked (Last 30 Days)
+                    </h3>
+                    <div className="flex items-center gap-4 text-xs">
+                      <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-purple-500"></div>Visitors</div>
+                      <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-red-500"></div>Blocked</div>
+                    </div>
+                  </div>
+                  <div className="relative">
+                    <MiniLineChart data={DAILY_STATS} dataKey="visitors" color="#a855f7" height={200} />
+                    <div className="absolute inset-0">
+                      <MiniLineChart data={DAILY_STATS} dataKey="blocked" color="#ef4444" height={200} />
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Risk Distribution */}
+                <div className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-5">
+                  <h3 className="font-semibold flex items-center gap-2 mb-4">
+                    <PieChart className="h-5 w-5 text-orange-400" />
+                    Risk Distribution
+                  </h3>
+                  <DonutChart data={riskDistribution} size={140} />
+                </div>
+              </div>
+              
+              {/* Bar Charts Row */}
+              <div className="grid grid-cols-2 gap-6">
+                {/* Top Cities */}
+                <div className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-5">
+                  <h3 className="font-semibold flex items-center gap-2 mb-4">
+                    <MapPin className="h-5 w-5 text-cyan-400" />
+                    Top Cities by Blocked Clicks
+                  </h3>
+                  <BarChart data={cityStats} labelKey="city" valueKey="count" color="#06b6d4" height={180} />
+                </div>
+                
+                {/* Device Types */}
+                <div className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-5">
+                  <h3 className="font-semibold flex items-center gap-2 mb-4">
+                    <Laptop className="h-5 w-5 text-blue-400" />
+                    Device Types
+                  </h3>
+                  <BarChart data={deviceStats} labelKey="device" valueKey="count" color="#3b82f6" height={180} />
+                </div>
+              </div>
+              
+              {/* Recent Visitors Table */}
+              <DataTable
+                title="Recent Visitors"
+                columns={visitorColumns}
+                data={MOCK_VISITORS.slice(0, 50)}
+                pageSize={10}
+                onExport={handleExport}
+              />
             </div>
-          ) : (
-            <>
-              {/* Dashboard */}
-              {tab === "dashboard" && data && (
-                <div className="space-y-5">
-                  {/* KPI Cards */}
-                  <div className="grid grid-cols-4 gap-4">
-                    <KPICard title="Bugün Engellenen Bot" value={data.today_blocked} icon={Bot} color="red" change={12} changeType="up" chartData={data.daily_stats?.slice(-7).map(d => d.blocked) || [1,2,3,4,5,6,7]} />
-                    <KPICard title="Havuzdan Gelen Tehdit" value={totalPoolBlocked} icon={Layers} color="orange" chartData={[3, 5, 8, 6, 9, 7, 10]} />
-                    <KPICard title="Tahmini Tasarruf" value={savings} prefix="₺" icon={CircleDollarSign} color="green" change={8} changeType="up" chartData={data.daily_stats?.slice(-7).map(d => d.blocked * 2.5) || []} />
-                    <KPICard title="Aktif Engelli IP" value={data.total_blocked_ips} icon={ShieldBan} color="purple" chartData={[5, 8, 12, 15, 18, 22, data.total_blocked_ips]} />
-                  </div>
-                  
-                  {/* Mini Stats */}
-                  <div className="grid grid-cols-4 gap-4">
-                    {[
-                      { icon: Eye, value: data.total_visitors, label: "Toplam Ziyaretçi", color: "#2563eb" },
-                      { icon: Users, value: data.total_users, label: "Toplam Müşteri", color: "#16a34a" },
-                      { icon: Globe, value: data.total_sites, label: "Aktif Site", color: "#0891b2" },
-                      { icon: Clock, value: data.pending_users, label: "Onay Bekleyen", color: "#ea580c" },
-                    ].map((s, i) => (
-                      <div key={i} className="bg-[#0a0a0a] border border-gray-800 rounded-xl p-4 flex items-center gap-3">
-                        <s.icon className="h-5 w-5" style={{ color: s.color }} />
-                        <div>
-                          <div className="text-lg font-bold text-white">{s.value.toLocaleString('tr-TR')}</div>
-                          <div className="text-xs text-gray-500">{s.label}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  {/* Charts */}
-                  <div className="grid grid-cols-3 gap-5">
-                    <div className="bg-[#0a0a0a] border border-gray-800 rounded-xl p-5">
-                      <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
-                        <PieChart className="h-4 w-4 text-purple-500" /> Risk Dağılımı
-                      </h3>
-                      <DonutChart data={riskData} size={130} />
-                    </div>
-                    <div className="bg-[#0a0a0a] border border-gray-800 rounded-xl p-5">
-                      <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-cyan-500" /> Şehir Dağılımı
-                      </h3>
-                      <div className="space-y-2.5">
-                        {(data.city_distribution || []).slice(0, 5).map((c, i) => (
-                          <ProgressBar key={i} label={c._id || 'Bilinmiyor'} value={c.count} total={data.city_distribution[0]?.count || 1} color={['#2563eb', '#9333ea', '#0891b2', '#16a34a', '#ea580c'][i]} />
-                        ))}
-                      </div>
-                    </div>
-                    <div className="bg-[#0a0a0a] border border-gray-800 rounded-xl p-5">
-                      <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
-                        <Monitor className="h-4 w-4 text-blue-500" /> Cihaz Dağılımı
-                      </h3>
-                      <div className="space-y-2.5">
-                        {(data.device_distribution || []).slice(0, 4).map((d, i) => (
-                          <ProgressBar key={i} label={d._id || 'Bilinmiyor'} value={d.count} total={data.device_distribution[0]?.count || 1} color={['#16a34a', '#2563eb', '#ea580c', '#9333ea'][i]} />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Site Performance */}
-                  <DataTable title="Site Performansı" columns={siteCols} data={siteStats}
-                    actions={<button className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 rounded-lg text-xs flex items-center gap-1"><Download className="h-3 w-3" /> Excel</button>} />
-                  
-                  {/* Recent Visitors */}
-                  <DataTable title="Son Ziyaretçiler" columns={visitorCols.slice(0, -1)} data={visitors.slice(0, 8)}
-                    actions={<button onClick={() => setTab('visitors')} className="text-blue-400 hover:text-blue-300 text-xs">Tümü →</button>} />
-                </div>
-              )}
-              
-              {/* Sites */}
-              {tab === "sites" && (
-                <DataTable title="Tüm Siteler" columns={siteCols} data={siteStats}
-                  actions={<button className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 rounded-lg text-xs flex items-center gap-1"><Download className="h-3 w-3" /> Excel</button>} />
-              )}
-              
-              {/* Visitors */}
-              {tab === "visitors" && (
-                <DataTable title="Tüm Ziyaretçiler" columns={visitorCols} data={visitors}
-                  onRowAction={(action, row) => action === 'block' && handleBlockIP(row.ip_address, row.site_id)}
-                  actions={<button className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 rounded-lg text-xs flex items-center gap-1"><Download className="h-3 w-3" /> Excel</button>} />
-              )}
-              
-              {/* Live Monitoring */}
-              {tab === "live" && (
-                <div className="space-y-4">
-                  {/* Filters */}
-                  <div className="bg-[#0a0a0a] border border-gray-800 rounded-xl p-4">
-                    <div className="flex items-center gap-4 flex-wrap">
-                      <div className="flex items-center gap-2">
-                        <Filter className="h-4 w-4 text-gray-500" />
-                        <span className="text-sm text-gray-400">Filtreler:</span>
-                      </div>
-                      <select value={filters.site} onChange={(e) => setFilters({...filters, site: e.target.value})}
-                        className="px-3 py-1.5 bg-black border border-gray-800 rounded-lg text-sm text-white">
-                        <option value="">Tüm Siteler</option>
-                        {sites.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                      </select>
-                      <input type="text" placeholder="Şehir" value={filters.city} onChange={(e) => setFilters({...filters, city: e.target.value})}
-                        className="px-3 py-1.5 bg-black border border-gray-800 rounded-lg text-sm text-white w-32" />
-                      <select value={filters.riskLevel} onChange={(e) => setFilters({...filters, riskLevel: e.target.value})}
-                        className="px-3 py-1.5 bg-black border border-gray-800 rounded-lg text-sm text-white">
-                        <option value="">Tüm Risk</option>
-                        <option value="critical">Kritik</option>
-                        <option value="high">Yüksek</option>
-                        <option value="medium">Orta</option>
-                        <option value="low">Düşük</option>
-                      </select>
-                      <select value={filters.blocked} onChange={(e) => setFilters({...filters, blocked: e.target.value})}
-                        className="px-3 py-1.5 bg-black border border-gray-800 rounded-lg text-sm text-white">
-                        <option value="">Tüm Durum</option>
-                        <option value="true">Engellenen</option>
-                        <option value="false">İzin Verilen</option>
-                      </select>
-                      <button onClick={() => setFilters({ site: '', city: '', riskLevel: '', blocked: '' })}
-                        className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm text-gray-400">
-                        Temizle
-                      </button>
-                    </div>
-                  </div>
-                  
-                  {/* Live Feed */}
-                  <div className="bg-[#0a0a0a] border border-gray-800 rounded-xl">
-                    <div className="p-4 border-b border-gray-800 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <LivePulse />
-                        <h3 className="font-semibold">Canlı Saldırı Akışı</h3>
-                        <span className="text-xs text-gray-500">({filteredVisitors.length} sonuç)</span>
-                      </div>
-                    </div>
-                    <div className="divide-y divide-gray-800/50 max-h-[calc(100vh-280px)] overflow-y-auto">
-                      {filteredVisitors.slice(0, 50).map((v, i) => (
-                        <div key={v.id || i} className="flex items-center gap-4 p-4 hover:bg-white/[0.02]">
-                          <div className={`w-2 h-2 rounded-full ${v.risk_level === 'critical' || v.risk_level === 'high' ? 'bg-red-500' : v.risk_level === 'medium' ? 'bg-yellow-500' : 'bg-green-500'}`}></div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-mono text-sm text-white">{v.ip_address}</span>
-                              <span className="px-2 py-0.5 bg-blue-600/20 text-blue-400 rounded text-xs">{getSiteName(v.site_id)}</span>
-                              {v.is_blocked && <span className="px-2 py-0.5 bg-red-600/20 text-red-400 rounded text-xs">ENGELLENDİ</span>}
-                            </div>
-                            <div className="flex items-center gap-3 mt-1 text-xs text-gray-500 flex-wrap">
-                              <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{v.city || '-'}, {v.country || '-'}</span>
-                              <span className="flex items-center gap-1"><DeviceIcon type={v.device_type} />{v.device_brand || '-'}</span>
-                              <span className="flex items-center gap-1"><Timer className="h-3 w-3" />{v.time_on_page || 0}s</span>
-                              <span className="flex items-center gap-1"><MousePointer className="h-3 w-3" />{v.mouse_movements || 0} hareket</span>
-                              <span className="flex items-center gap-1"><Globe className="h-3 w-3" />{v.browser || '-'}</span>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <RiskBadge level={v.risk_level} score={Math.round(v.risk_score)} />
-                            {!v.is_blocked && (
-                              <button onClick={() => handleBlockIP(v.ip_address, v.site_id)}
-                                className="px-2.5 py-1.5 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded-lg text-xs flex items-center gap-1">
-                                <Ban className="h-3 w-3" /> Engelle
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              {/* Users */}
-              {tab === "users" && (
-                <div className="space-y-5">
-                  {users.filter(u => u.status === 'pending').length > 0 && (
-                    <div className="bg-orange-600/10 border border-orange-600/30 rounded-xl p-4">
-                      <h3 className="text-sm font-semibold text-orange-400 mb-3 flex items-center gap-2">
-                        <Clock className="h-4 w-4" /> Onay Bekleyenler ({users.filter(u => u.status === 'pending').length})
-                      </h3>
-                      <div className="space-y-2">
-                        {users.filter(u => u.status === 'pending').map((u) => (
-                          <div key={u.id} className="flex items-center justify-between p-3 bg-black/30 rounded-lg">
-                            <div>
-                              <p className="font-medium text-white text-sm">{u.full_name}</p>
-                              <p className="text-xs text-gray-500">{u.email}</p>
-                            </div>
-                            <button onClick={() => handleApproveUser(u.id)} className="px-3 py-1.5 bg-green-600 hover:bg-green-500 rounded-lg text-xs flex items-center gap-1">
-                              <CheckCircle className="h-3 w-3" /> Onayla
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  <DataTable title="Tüm Kullanıcılar" columns={[
-                    { key: 'full_name', label: 'Ad Soyad', sortable: true, render: (v, r) => <div><p className="text-white text-sm">{v}</p><p className="text-xs text-gray-500">{r.email}</p></div> },
-                    { key: 'company_name', label: 'Şirket', sortable: true, render: (v) => <span className="text-gray-400 text-sm">{v || '-'}</span> },
-                    { key: 'role', label: 'Rol', sortable: true, render: (v) => <span className={`px-2 py-1 rounded text-xs ${v === 'super_admin' ? 'bg-purple-600/20 text-purple-400' : v === 'admin_helper' ? 'bg-blue-600/20 text-blue-400' : 'bg-gray-600/20 text-gray-400'}`}>{v === 'super_admin' ? 'Süper Admin' : v === 'admin_helper' ? 'Admin' : 'Müşteri'}</span> },
-                    { key: 'status', label: 'Durum', sortable: true, render: (v) => <span className={`px-2 py-1 rounded text-xs ${v === 'approved' ? 'bg-green-600/20 text-green-400' : v === 'pending' ? 'bg-yellow-600/20 text-yellow-400' : 'bg-red-600/20 text-red-400'}`}>{v === 'approved' ? 'Onaylı' : v === 'pending' ? 'Bekliyor' : 'Reddedildi'}</span> },
-                    { key: 'created_at', label: 'Kayıt', sortable: true, render: (v) => <span className="text-gray-500 text-xs">{new Date(v).toLocaleDateString('tr-TR')}</span> },
-                  ]} data={users} />
-                </div>
-              )}
-              
-              {/* Pools */}
-              {tab === "pools" && (
-                <div className="space-y-4">
-                  <div className="flex justify-end">
-                    <button className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm flex items-center gap-1">
-                      <Plus className="h-4 w-4" /> Yeni Havuz
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-3 gap-4">
-                    {pools.map((p) => (
-                      <div key={p.id} className="bg-[#0a0a0a] border border-gray-800 rounded-xl p-5 hover:border-gray-700">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="p-2 bg-blue-600/20 rounded-lg">
-                            <Layers className="h-5 w-5 text-blue-400" />
-                          </div>
-                          <span className={`px-2 py-1 rounded text-xs ${p.is_active ? 'bg-green-600/20 text-green-400' : 'bg-gray-600/20 text-gray-400'}`}>
-                            {p.is_active ? 'Aktif' : 'Pasif'}
-                          </span>
-                        </div>
-                        <h3 className="font-semibold text-white mb-1">{p.name}</h3>
-                        <p className="text-sm text-gray-500 mb-3">{p.sector} - {p.city}</p>
-                        <div className="flex justify-between text-sm pt-3 border-t border-gray-800">
-                          <span className="text-gray-400">{p.sites?.length || 0} site</span>
-                          <span className="text-red-400">{p.blocked_ips?.length || 0} engelli IP</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
-              {/* Blocked */}
-              {tab === "blocked" && (
-                <DataTable title="Engellenen IP'ler" columns={[
-                  { key: 'ip_address', label: 'IP', sortable: true, render: (v) => <span className="font-mono text-white text-sm">{v}</span> },
-                  { key: 'site_id', label: 'Site', sortable: true, render: (v) => <span className="text-blue-400 text-sm">{getSiteName(v)}</span> },
-                  { key: 'city', label: 'Şehir', render: (_, r) => <span className="text-gray-400 text-sm">{r.city || '-'}</span> },
-                  { key: 'risk_score', label: 'Risk', sortable: true, render: (v, r) => <RiskBadge level={r.risk_level} score={Math.round(v)} /> },
-                  { key: 'risk_factors', label: 'Sebep', render: (v) => <span className="text-gray-400 text-xs">{Array.isArray(v) ? v.slice(0, 2).join(', ') : '-'}</span> },
-                  { key: 'created_at', label: 'Tarih', sortable: true, render: (v) => <span className="text-gray-500 text-xs">{new Date(v).toLocaleString('tr-TR')}</span> },
-                ]} data={visitors.filter(v => v.is_blocked)} />
-              )}
-              
-              {/* Settings */}
-              {tab === "settings" && (
-                <div className="bg-[#0a0a0a] border border-gray-800 rounded-xl p-5">
-                  <h3 className="font-semibold mb-3">Sistem Ayarları</h3>
-                  <p className="text-gray-500 text-sm">Bu bölüm geliştirme aşamasında...</p>
-                </div>
-              )}
-            </>
           )}
-        </div>
-      </main>
-    </div>
-  );
-};
-
-// Customer Dashboard
-const CustomerDashboard = ({ user, onLogout }) => {
-  const [data, setData] = useState(null);
-  useEffect(() => { api.get("/dashboard").then(r => setData(r.data)).catch(console.error); }, []);
-  
-  if (!data) return <div className="min-h-screen bg-black flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div></div>;
-  
-  return (
-    <div className="min-h-screen bg-black text-white">
-      <header className="bg-[#0a0a0a] border-b border-gray-800 px-5 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-2"><Shield className="h-6 w-6 text-blue-500" /><span className="font-bold">AdsKalkan</span></div>
-        <div className="flex items-center gap-3">
-          <span className="text-gray-400 text-sm">{user?.full_name}</span>
-          <button onClick={onLogout} className="p-1.5 hover:bg-white/5 rounded-lg"><LogOut className="h-4 w-4" /></button>
-        </div>
-      </header>
-      <main className="max-w-5xl mx-auto p-5">
-        {user?.status === 'pending' ? (
-          <div className="bg-yellow-600/10 border border-yellow-600/30 rounded-xl p-6 text-center">
-            <Clock className="h-12 w-12 text-yellow-500 mx-auto mb-3" />
-            <h2 className="text-xl font-bold mb-2">Hesabınız Onay Bekliyor</h2>
-            <p className="text-gray-500">Yönetici onayından sonra erişebilirsiniz.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-3 gap-4">
-            <KPICard title="Toplam Ziyaretçi" value={data.total_visitors} icon={Eye} color="blue" />
-            <KPICard title="Engellenen" value={data.blocked_visitors} icon={ShieldX} color="red" />
-            <KPICard title="Koruma Oranı" value={data.protection_rate} suffix="%" icon={ShieldCheck} color="green" />
-          </div>
-        )}
-      </main>
+          
+          {/* Sites Page */}
+          {activeTab === 'sites' && (
+            <DataTable
+              title="Sites Overview"
+              columns={siteColumns}
+              data={MOCK_SITES}
+              pageSize={20}
+              onExport={handleExport}
+            />
+          )}
+          
+          {/* Pools Page */}
+          {activeTab === 'pools' && (
+            <DataTable
+              title="Pools (Sector + City)"
+              columns={poolColumns}
+              data={MOCK_POOLS}
+              pageSize={20}
+              onExport={handleExport}
+            />
+          )}
+          
+          {/* Visitors Page */}
+          {activeTab === 'visitors' && (
+            <DataTable
+              title="All Visitors"
+              columns={visitorColumns}
+              data={filteredVisitors}
+              pageSize={20}
+              onExport={handleExport}
+              filters={
+                <div className="flex items-center gap-3 flex-wrap">
+                  <Select
+                    options={MOCK_SITES.map(s => ({ value: s.id, label: s.name }))}
+                    value={visitorFilters.site}
+                    onChange={(v) => setVisitorFilters({ ...visitorFilters, site: v })}
+                    placeholder="All Sites"
+                    className="w-40"
+                  />
+                  <Select
+                    options={['Istanbul', 'Ankara', 'Izmir', 'Bursa', 'Antalya', 'Frankfurt', 'Amsterdam'].map(c => ({ value: c, label: c }))}
+                    value={visitorFilters.city}
+                    onChange={(v) => setVisitorFilters({ ...visitorFilters, city: v })}
+                    placeholder="All Cities"
+                    className="w-36"
+                  />
+                  <Select
+                    options={[{ value: 'desktop', label: 'Desktop' }, { value: 'mobile', label: 'Mobile' }, { value: 'tablet', label: 'Tablet' }]}
+                    value={visitorFilters.device}
+                    onChange={(v) => setVisitorFilters({ ...visitorFilters, device: v })}
+                    placeholder="All Devices"
+                    className="w-36"
+                  />
+                  <Select
+                    options={[{ value: 'low', label: 'Low' }, { value: 'medium', label: 'Medium' }, { value: 'high', label: 'High' }, { value: 'critical', label: 'Critical' }]}
+                    value={visitorFilters.riskLevel}
+                    onChange={(v) => setVisitorFilters({ ...visitorFilters, riskLevel: v })}
+                    placeholder="All Risk Levels"
+                    className="w-40"
+                  />
+                  <Select
+                    options={[{ value: 'blocked', label: 'Blocked' }, { value: 'allowed', label: 'Allowed' }]}
+                    value={visitorFilters.status}
+                    onChange={(v) => setVisitorFilters({ ...visitorFilters, status: v })}
+                    placeholder="All Status"
+                    className="w-36"
+                  />
+                  <button
+                    onClick={() => setVisitorFilters({ site: '', city: '', device: '', riskLevel: '', status: '' })}
+                    className="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm"
+                  >
+                    Clear Filters
+                  </button>
+                </div>
+              }
+            />
+          )}
+          
+          {/* Blocked IPs Page */}
+          {activeTab === 'blocked' && (
+            <DataTable
+              title="Blocked IP Addresses"
+              columns={visitorColumns}
+              data={MOCK_VISITORS.filter(v => v.is_blocked)}
+              pageSize={20}
+              onExport={handleExport}
+            />
+          )}
+          
+          {/* Users Page (Super Admin Only) */}
+          {activeTab === 'users' && isSuperAdmin && (
+            <DataTable
+              title="User Management"
+              columns={userColumns}
+              data={MOCK_USERS}
+              pageSize={20}
+              onExport={handleExport}
+            />
+          )}
+          
+          {/* Reports Page */}
+          {activeTab === 'reports' && (
+            <div className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-8 text-center">
+              <FileText className="h-16 w-16 text-gray-600 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-2">Reports</h3>
+              <p className="text-gray-500">Report generation and export features coming soon.</p>
+            </div>
+          )}
+          
+          {/* Settings Page */}
+          {activeTab === 'settings' && (
+            <div className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-8 text-center">
+              <Settings className="h-16 w-16 text-gray-600 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-2">Settings</h3>
+              <p className="text-gray-500">System settings and configuration options.</p>
+            </div>
+          )}
+          
+          {/* Packages Page (Super Admin Only) */}
+          {activeTab === 'packages' && isSuperAdmin && (
+            <div className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-8 text-center">
+              <Package className="h-16 w-16 text-gray-600 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-2">Package Management</h3>
+              <p className="text-gray-500">Manage subscription packages and pricing.</p>
+            </div>
+          )}
+          
+          {/* Campaigns Page (Super Admin Only) */}
+          {activeTab === 'campaigns' && isSuperAdmin && (
+            <div className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-8 text-center">
+              <Megaphone className="h-16 w-16 text-gray-600 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-2">Campaign Management</h3>
+              <p className="text-gray-500">Manage promotional campaigns and discounts.</p>
+            </div>
+          )}
+          
+          {/* System Logs Page (Super Admin Only) */}
+          {activeTab === 'system' && isSuperAdmin && (
+            <div className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-8 text-center">
+              <Server className="h-16 w-16 text-gray-600 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-2">System Logs</h3>
+              <p className="text-gray-500">View system logs and audit trails.</p>
+            </div>
+          )}
+        </main>
+      </div>
     </div>
   );
 };
 
 // Main App
 function App() {
-  const [page, setPage] = useState("landing");
   const [user, setUser] = useState(null);
   
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const saved = localStorage.getItem("user");
-    if (token && saved) { setUser(JSON.parse(saved)); setPage("dashboard"); }
+    const token = localStorage.getItem('token');
+    const savedUser = localStorage.getItem('user');
+    if (token && savedUser) {
+      setUser(JSON.parse(savedUser));
+    }
   }, []);
   
-  const handleLogout = () => { localStorage.removeItem("token"); localStorage.removeItem("user"); setUser(null); setPage("landing"); };
-  const handleLogin = (u) => { setUser(u); setPage("dashboard"); };
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
+  };
   
-  if (page === "landing") return <LandingPage onLogin={() => setPage("login")} onRegister={() => setPage("register")} />;
-  if (page === "login") return <LoginPage onBack={() => setPage("landing")} onSuccess={handleLogin} />;
-  if (page === "register") return <RegisterPage onBack={() => setPage("landing")} />;
-  if (page === "dashboard" && user) return user.role === "super_admin" || user.role === "admin_helper" ? <AdminDashboard user={user} onLogout={handleLogout} /> : <CustomerDashboard user={user} onLogout={handleLogout} />;
-  return <LandingPage onLogin={() => setPage("login")} onRegister={() => setPage("register")} />;
+  const handleLogin = (userData) => {
+    setUser(userData);
+  };
+  
+  if (!user) {
+    return <LoginPage onSuccess={handleLogin} />;
+  }
+  
+  return <AdminDashboard user={user} onLogout={handleLogout} />;
 }
 
 export default App;
