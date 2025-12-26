@@ -495,6 +495,7 @@ async def create_package(package_data: PackageCreate, current_user: dict = Depen
     package_dict["created_at"] = package_dict["created_at"].isoformat()
     
     await db.packages.insert_one(package_dict)
+    package_dict.pop("_id", None)
     return package_dict
 
 @api_router.get("/packages")
