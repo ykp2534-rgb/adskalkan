@@ -437,8 +437,196 @@ const Select = ({ options, value, onChange, placeholder, className = '' }) => (
   </select>
 );
 
+// ==================== PUBLIC WEBSITE ====================
+const PublicWebsite = ({ onLogin }) => {
+  return (
+    <div className="min-h-screen bg-slate-950 text-white">
+      {/* Navigation */}
+      <nav className="border-b border-slate-800 px-8 py-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Shield className="h-8 w-8 text-purple-500" />
+            <span className="text-xl font-bold">AdsKalkan</span>
+          </div>
+          <div className="flex items-center gap-6">
+            <a href="#features" className="text-gray-400 hover:text-white text-sm">Özellikler</a>
+            <a href="#pricing" className="text-gray-400 hover:text-white text-sm">Fiyatlar</a>
+            <a href="#contact" className="text-gray-400 hover:text-white text-sm">İletişim</a>
+            <button onClick={onLogin} className="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-sm font-medium">
+              Giriş Yap
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <section className="py-20 px-8">
+        <div className="max-w-6xl mx-auto text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500/10 border border-purple-500/30 rounded-full text-purple-400 text-sm mb-8">
+            <Zap className="h-4 w-4" />
+            Yapay Zeka Destekli Koruma
+          </div>
+          <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
+            Google Ads Bütçenizi
+            <br />
+            <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+              Sahte Tıklamalardan
+            </span>
+            <br />
+            Koruyun
+          </h1>
+          <p className="text-xl text-gray-400 max-w-3xl mx-auto mb-10">
+            Gelişmiş yapay zeka ile bot trafiğini, click farm saldırılarını ve sahte tıklamaları
+            gerçek zamanlı tespit edip engelleyin.
+          </p>
+          <div className="flex gap-4 justify-center">
+            <button onClick={onLogin} className="px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 rounded-xl text-lg font-medium">
+              Ücretsiz Deneyin
+            </button>
+            <button className="px-8 py-4 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-lg font-medium">
+              Demo İzle
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats */}
+      <section className="py-16 px-8 bg-slate-900/50">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-4 gap-8">
+            <div className="text-center">
+              <p className="text-4xl font-bold text-purple-400">10M+</p>
+              <p className="text-gray-400 mt-2">Engellenen Bot</p>
+            </div>
+            <div className="text-center">
+              <p className="text-4xl font-bold text-blue-400">500+</p>
+              <p className="text-gray-400 mt-2">Aktif Müşteri</p>
+            </div>
+            <div className="text-center">
+              <p className="text-4xl font-bold text-emerald-400">%99.9</p>
+              <p className="text-gray-400 mt-2">Tespit Oranı</p>
+            </div>
+            <div className="text-center">
+              <p className="text-4xl font-bold text-orange-400">₺2.5M+</p>
+              <p className="text-gray-400 mt-2">Tasarruf</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section id="features" className="py-20 px-8">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-12">Neden AdsKalkan?</h2>
+          <div className="grid grid-cols-3 gap-8">
+            {[
+              { icon: Shield, title: "Çok Katmanlı Koruma", desc: "IP, cihaz, davranış, fingerprint ve pattern analizi ile 5 katmanlı koruma.", color: "purple" },
+              { icon: Layers, title: "Havuz Sistemi", desc: "Sektördeki sitelerle tehdit bilgisi paylaşımı. Bir sitede tespit, hepsinde engel.", color: "blue" },
+              { icon: Activity, title: "Gerçek Zamanlı İzleme", desc: "Canlı dashboard ile anlık saldırı tespiti ve otomatik engelleme.", color: "cyan" },
+              { icon: BarChart3, title: "Detaylı Analitik", desc: "Şehir, cihaz, saat bazlı detaylı raporlar ve indirilebilir analizler.", color: "orange" },
+              { icon: Zap, title: "Kolay Entegrasyon", desc: "Tek satır kod ile sitenize entegre edin. 5 dakikada koruma başlasın.", color: "green" },
+              { icon: Target, title: "Google Ads Entegrasyonu", desc: "Tespit edilen IP'leri otomatik olarak Google Ads'e gönderin.", color: "red" },
+            ].map((f, i) => (
+              <div key={i} className="p-6 bg-slate-900/50 border border-slate-800 rounded-xl hover:border-slate-700 transition-all">
+                <f.icon className={`h-10 w-10 text-${f.color}-400 mb-4`} />
+                <h3 className="text-lg font-semibold mb-2">{f.title}</h3>
+                <p className="text-gray-400 text-sm">{f.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing */}
+      <section id="pricing" className="py-20 px-8 bg-slate-900/50">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-4">Fiyatlandırma</h2>
+          <p className="text-gray-400 text-center mb-12">İhtiyacınıza uygun paketi seçin</p>
+          <div className="grid grid-cols-3 gap-8">
+            {[
+              { name: "Starter", price: "₺499", period: "/ay", features: ["3 site", "10.000 ziyaretçi/ay", "Temel koruma", "Email destek"], popular: false },
+              { name: "Professional", price: "₺999", period: "/ay", features: ["10 site", "50.000 ziyaretçi/ay", "Gelişmiş koruma", "Havuz erişimi", "Öncelikli destek"], popular: true },
+              { name: "Enterprise", price: "₺2.499", period: "/ay", features: ["Sınırsız site", "Sınırsız ziyaretçi", "Tam koruma", "API erişimi", "Özel destek", "SLA garantisi"], popular: false },
+            ].map((p, i) => (
+              <div key={i} className={`p-6 rounded-xl border ${p.popular ? 'bg-purple-600/10 border-purple-500/50' : 'bg-slate-900 border-slate-800'}`}>
+                {p.popular && <span className="text-xs text-purple-400 font-medium">EN POPÜLER</span>}
+                <h3 className="text-xl font-bold mt-2">{p.name}</h3>
+                <p className="text-3xl font-bold mt-4">{p.price}<span className="text-sm text-gray-400">{p.period}</span></p>
+                <ul className="mt-6 space-y-3">
+                  {p.features.map((f, j) => (
+                    <li key={j} className="flex items-center gap-2 text-sm text-gray-300">
+                      <CheckCircle className="h-4 w-4 text-emerald-400" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <button onClick={onLogin} className={`w-full mt-6 py-3 rounded-lg font-medium ${p.popular ? 'bg-purple-600 hover:bg-purple-500' : 'bg-slate-800 hover:bg-slate-700'}`}>
+                  Başla
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="py-20 px-8">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-3xl font-bold mb-4">Reklam Bütçenizi Korumaya Başlayın</h2>
+          <p className="text-gray-400 mb-8">7 gün ücretsiz deneme ile AdsKalkan'ı test edin. Kredi kartı gerekmez.</p>
+          <button onClick={onLogin} className="px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 rounded-xl text-lg font-medium">
+            Ücretsiz Başla
+          </button>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer id="contact" className="border-t border-slate-800 py-12 px-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-4 gap-8">
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <Shield className="h-6 w-6 text-purple-500" />
+                <span className="font-bold">AdsKalkan</span>
+              </div>
+              <p className="text-sm text-gray-400">Google Ads sahte tıklama koruma platformu.</p>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4">Ürün</h4>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li><a href="#" className="hover:text-white">Özellikler</a></li>
+                <li><a href="#" className="hover:text-white">Fiyatlar</a></li>
+                <li><a href="#" className="hover:text-white">API</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4">Şirket</h4>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li><a href="#" className="hover:text-white">Hakkımızda</a></li>
+                <li><a href="#" className="hover:text-white">Blog</a></li>
+                <li><a href="#" className="hover:text-white">Kariyer</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4">İletişim</h4>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li>info@adskalkan.com</li>
+                <li>+90 212 123 45 67</li>
+                <li>Istanbul, Türkiye</li>
+              </ul>
+            </div>
+          </div>
+          <div className="border-t border-slate-800 mt-8 pt-8 text-center text-sm text-gray-500">
+            © 2024 AdsKalkan. Tüm hakları saklıdır.
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
 // ==================== LOGIN ====================
-const LoginPage = ({ onSuccess }) => {
+const LoginPage = ({ onSuccess, onBack }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
