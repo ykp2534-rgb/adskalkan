@@ -616,6 +616,7 @@ async def create_site(site_data: SiteCreate, current_user: dict = Depends(requir
     site_dict["created_at"] = site_dict["created_at"].isoformat()
     
     await db.sites.insert_one(site_dict)
+    site_dict.pop("_id", None)
     
     # If pool_id is set, add site to pool
     if site_data.pool_id:
