@@ -454,6 +454,8 @@ async def create_pool(pool_data: PoolCreate, current_user: dict = Depends(requir
     pool_dict["updated_at"] = pool_dict["updated_at"].isoformat()
     
     await db.pools.insert_one(pool_dict)
+    # Return without MongoDB _id
+    del pool_dict["_id"] if "_id" in pool_dict else None
     return pool_dict
 
 @api_router.get("/admin/pools")
