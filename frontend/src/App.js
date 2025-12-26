@@ -437,131 +437,522 @@ const Select = ({ options, value, onChange, placeholder, className = '' }) => (
   </select>
 );
 
-// ==================== PUBLIC WEBSITE ====================
+// ==================== PUBLIC WEBSITE - PROFESSIONAL SAAS LANDING ====================
 const PublicWebsite = ({ onLogin }) => {
+  // Mock dashboard data for preview
+  const mockTableData = [
+    { date: '15.01.2025 14:32', site: 'istanbul-tesisat.com', ip: '185.42.xxx.xxx', city: 'Istanbul', device: 'Mobile', time: '2s', risk: 87, status: 'blocked' },
+    { date: '15.01.2025 14:31', site: 'ankara-su.com', ip: '31.145.xxx.xxx', city: 'Ankara', device: 'Desktop', time: '45s', risk: 12, status: 'allowed' },
+    { date: '15.01.2025 14:30', site: 'izmir-elektrik.com', ip: '104.21.xxx.xxx', city: 'Frankfurt', device: 'Desktop', time: '1s', risk: 94, status: 'blocked' },
+    { date: '15.01.2025 14:29', site: 'bursa-tesisat.com', ip: '88.234.xxx.xxx', city: 'Bursa', device: 'Mobile', time: '32s', risk: 18, status: 'allowed' },
+    { date: '15.01.2025 14:28', site: 'istanbul-tesisat.com', ip: '34.102.xxx.xxx', city: 'USA', device: 'Desktop', time: '0s', risk: 98, status: 'blocked' },
+  ];
+
+  const chartBars = [
+    { label: 'Pzt', blocked: 45, allowed: 120 },
+    { label: 'Sal', blocked: 52, allowed: 135 },
+    { label: 'Çar', blocked: 38, allowed: 142 },
+    { label: 'Per', blocked: 65, allowed: 128 },
+    { label: 'Cum', blocked: 71, allowed: 156 },
+    { label: 'Cmt', blocked: 42, allowed: 98 },
+    { label: 'Paz', blocked: 35, allowed: 87 },
+  ];
+
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="min-h-screen bg-[#0a0a0f] text-white overflow-x-hidden">
+      {/* Animated Background */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-purple-600/20 rounded-full blur-[150px] animate-pulse" />
+        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-blue-600/15 rounded-full blur-[150px] animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-1/2 left-1/2 w-[400px] h-[400px] bg-cyan-600/10 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
+        {/* Grid pattern */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px]" />
+      </div>
+
       {/* Navigation */}
-      <nav className="border-b border-slate-800 px-8 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+      <nav className="relative z-50 border-b border-white/5 backdrop-blur-xl bg-black/20">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Shield className="h-8 w-8 text-purple-500" />
-            <span className="text-xl font-bold">AdsKalkan</span>
+            <div className="relative">
+              <div className="absolute inset-0 bg-purple-500 blur-lg opacity-50" />
+              <Shield className="relative h-9 w-9 text-purple-400" />
+            </div>
+            <span className="text-xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">AdsKalkan</span>
           </div>
-          <div className="flex items-center gap-6">
-            <a href="#features" className="text-gray-400 hover:text-white text-sm">Özellikler</a>
-            <a href="#pricing" className="text-gray-400 hover:text-white text-sm">Fiyatlar</a>
-            <a href="#contact" className="text-gray-400 hover:text-white text-sm">İletişim</a>
-            <button onClick={onLogin} className="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-sm font-medium">
+          <div className="hidden md:flex items-center gap-8">
+            <a href="#features" className="text-gray-400 hover:text-white text-sm transition-colors">Özellikler</a>
+            <a href="#how-it-works" className="text-gray-400 hover:text-white text-sm transition-colors">Nasıl Çalışır</a>
+            <a href="#dashboard" className="text-gray-400 hover:text-white text-sm transition-colors">Dashboard</a>
+            <a href="#pricing" className="text-gray-400 hover:text-white text-sm transition-colors">Fiyatlar</a>
+          </div>
+          <div className="flex items-center gap-3">
+            <button onClick={onLogin} className="px-4 py-2 text-gray-300 hover:text-white text-sm transition-colors">
               Giriş Yap
+            </button>
+            <button onClick={onLogin} className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 rounded-lg text-sm font-medium transition-all shadow-lg shadow-purple-500/25">
+              Ücretsiz Başla
             </button>
           </div>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section className="py-20 px-8">
-        <div className="max-w-6xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500/10 border border-purple-500/30 rounded-full text-purple-400 text-sm mb-8">
-            <Zap className="h-4 w-4" />
-            Yapay Zeka Destekli Koruma
-          </div>
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
-            Google Ads Bütçenizi
-            <br />
-            <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-              Sahte Tıklamalardan
-            </span>
-            <br />
-            Koruyun
-          </h1>
-          <p className="text-xl text-gray-400 max-w-3xl mx-auto mb-10">
-            Gelişmiş yapay zeka ile bot trafiğini, click farm saldırılarını ve sahte tıklamaları
-            gerçek zamanlı tespit edip engelleyin.
-          </p>
-          <div className="flex gap-4 justify-center">
-            <button onClick={onLogin} className="px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 rounded-xl text-lg font-medium">
-              Ücretsiz Deneyin
-            </button>
-            <button className="px-8 py-4 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-lg font-medium">
-              Demo İzle
-            </button>
+      <section className="relative z-10 pt-20 pb-32 px-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Left - Content */}
+            <div>
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500/10 border border-purple-500/30 rounded-full text-purple-400 text-sm mb-8 backdrop-blur-sm">
+                <Zap className="h-4 w-4" />
+                <span>Yapay Zeka Destekli Koruma</span>
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
+                </span>
+              </div>
+              
+              <h1 className="text-5xl lg:text-6xl font-bold leading-tight mb-6">
+                <span className="text-white">Google Ads</span>
+                <br />
+                <span className="bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                  Sahte Tıklama
+                </span>
+                <br />
+                <span className="text-white">Koruma Sistemi</span>
+              </h1>
+              
+              <p className="text-xl text-gray-400 mb-8 leading-relaxed">
+                Bot trafiğini, click farm saldırılarını ve sahte tıklamaları 
+                <span className="text-white font-medium"> gerçek zamanlı </span>
+                tespit edip engelleyin. Reklam bütçenizi koruyun.
+              </p>
+              
+              <div className="flex flex-wrap gap-4 mb-12">
+                <button onClick={onLogin} className="group px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 rounded-xl text-lg font-medium transition-all shadow-lg shadow-purple-500/25 flex items-center gap-2">
+                  <Zap className="h-5 w-5" />
+                  Ücretsiz Deneyin
+                  <ArrowUpRight className="h-4 w-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                </button>
+                <button onClick={onLogin} className="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-xl text-lg font-medium transition-all backdrop-blur-sm flex items-center gap-2">
+                  <Eye className="h-5 w-5" />
+                  Dashboard Görüntüle
+                </button>
+              </div>
+              
+              {/* Trust badges */}
+              <div className="flex items-center gap-8">
+                <div className="text-center">
+                  <p className="text-3xl font-bold text-white">10M+</p>
+                  <p className="text-sm text-gray-500">Engellenen Bot</p>
+                </div>
+                <div className="w-px h-12 bg-white/10" />
+                <div className="text-center">
+                  <p className="text-3xl font-bold text-white">%99.9</p>
+                  <p className="text-sm text-gray-500">Tespit Oranı</p>
+                </div>
+                <div className="w-px h-12 bg-white/10" />
+                <div className="text-center">
+                  <p className="text-3xl font-bold text-white">500+</p>
+                  <p className="text-sm text-gray-500">Aktif Müşteri</p>
+                </div>
+              </div>
+            </div>
+            
+            {/* Right - Dashboard Preview */}
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-blue-600/20 rounded-3xl blur-3xl" />
+              <div className="relative bg-[#12121a]/80 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-2xl">
+                {/* Mini header */}
+                <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/5">
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-5 w-5 text-purple-400" />
+                    <span className="text-sm font-medium">AdsKalkan Dashboard</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-2 w-2 rounded-full bg-emerald-500" />
+                    <span className="text-xs text-emerald-400">Canlı</span>
+                  </div>
+                </div>
+                
+                {/* Stats row */}
+                <div className="grid grid-cols-4 gap-2 mb-4">
+                  {[
+                    { label: 'Bugün Engellenen', value: '247', color: 'text-red-400', bg: 'bg-red-500/10' },
+                    { label: 'Toplam Ziyaretçi', value: '1,842', color: 'text-blue-400', bg: 'bg-blue-500/10' },
+                    { label: 'Koruma Oranı', value: '%28.4', color: 'text-purple-400', bg: 'bg-purple-500/10' },
+                    { label: 'Tasarruf', value: '₺618', color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+                  ].map((stat, i) => (
+                    <div key={i} className={`${stat.bg} rounded-lg p-2`}>
+                      <p className={`text-lg font-bold ${stat.color}`}>{stat.value}</p>
+                      <p className="text-[10px] text-gray-500">{stat.label}</p>
+                    </div>
+                  ))}
+                </div>
+                
+                {/* Mini chart */}
+                <div className="bg-black/30 rounded-lg p-3 mb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs text-gray-400">Haftalık Trafik</span>
+                    <div className="flex items-center gap-3 text-[10px]">
+                      <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-purple-500" />Engellenen</span>
+                      <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-emerald-500" />İzin</span>
+                    </div>
+                  </div>
+                  <div className="flex items-end gap-1 h-16">
+                    {chartBars.map((bar, i) => (
+                      <div key={i} className="flex-1 flex flex-col gap-0.5">
+                        <div className="flex-1 flex flex-col justify-end gap-0.5">
+                          <div className="bg-purple-500 rounded-t" style={{ height: `${(bar.blocked / 80) * 100}%` }} />
+                          <div className="bg-emerald-500/60 rounded-b" style={{ height: `${(bar.allowed / 200) * 100}%` }} />
+                        </div>
+                        <span className="text-[8px] text-gray-600 text-center">{bar.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Mini table */}
+                <div className="bg-black/30 rounded-lg overflow-hidden">
+                  <div className="px-3 py-2 border-b border-white/5 flex items-center justify-between">
+                    <span className="text-xs text-gray-400">Son Engellenenler</span>
+                    <Activity className="h-3 w-3 text-red-400" />
+                  </div>
+                  <table className="w-full text-[10px]">
+                    <thead className="bg-white/5">
+                      <tr className="text-gray-500">
+                        <th className="px-2 py-1.5 text-left">IP</th>
+                        <th className="px-2 py-1.5 text-left">Şehir</th>
+                        <th className="px-2 py-1.5 text-left">Cihaz</th>
+                        <th className="px-2 py-1.5 text-left">Risk</th>
+                        <th className="px-2 py-1.5 text-left">Durum</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {mockTableData.slice(0, 4).map((row, i) => (
+                        <tr key={i} className="hover:bg-white/5">
+                          <td className="px-2 py-1.5 font-mono text-gray-300">{row.ip}</td>
+                          <td className="px-2 py-1.5 text-gray-400">{row.city}</td>
+                          <td className="px-2 py-1.5 text-gray-400">{row.device}</td>
+                          <td className="px-2 py-1.5">
+                            <span className={`px-1.5 py-0.5 rounded text-[9px] font-medium ${row.risk >= 70 ? 'bg-red-500/20 text-red-400' : row.risk >= 30 ? 'bg-yellow-500/20 text-yellow-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
+                              {row.risk}
+                            </span>
+                          </td>
+                          <td className="px-2 py-1.5">
+                            <span className={`px-1.5 py-0.5 rounded text-[9px] font-medium ${row.status === 'blocked' ? 'bg-red-500/20 text-red-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
+                              {row.status === 'blocked' ? 'Engel' : 'İzin'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Stats */}
-      <section className="py-16 px-8 bg-slate-900/50">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-4 gap-8">
-            <div className="text-center">
-              <p className="text-4xl font-bold text-purple-400">10M+</p>
-              <p className="text-gray-400 mt-2">Engellenen Bot</p>
-            </div>
-            <div className="text-center">
-              <p className="text-4xl font-bold text-blue-400">500+</p>
-              <p className="text-gray-400 mt-2">Aktif Müşteri</p>
-            </div>
-            <div className="text-center">
-              <p className="text-4xl font-bold text-emerald-400">%99.9</p>
-              <p className="text-gray-400 mt-2">Tespit Oranı</p>
-            </div>
-            <div className="text-center">
-              <p className="text-4xl font-bold text-orange-400">₺2.5M+</p>
-              <p className="text-gray-400 mt-2">Tasarruf</p>
-            </div>
+      {/* Features Section */}
+      <section id="features" className="relative z-10 py-24 px-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <span className="text-purple-400 text-sm font-medium uppercase tracking-wider">Özellikler</span>
+            <h2 className="text-4xl font-bold mt-4 mb-4">Neden AdsKalkan?</h2>
+            <p className="text-gray-400 max-w-2xl mx-auto">
+              Rakiplerden farklı olarak, çok katmanlı analiz motorumuz sahte trafiği %99.9 doğrulukla tespit eder.
+            </p>
           </div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section id="features" className="py-20 px-8">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">Neden AdsKalkan?</h2>
-          <div className="grid grid-cols-3 gap-8">
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
-              { icon: Shield, title: "Çok Katmanlı Koruma", desc: "IP, cihaz, davranış, fingerprint ve pattern analizi ile 5 katmanlı koruma.", color: "purple" },
-              { icon: Layers, title: "Havuz Sistemi", desc: "Sektördeki sitelerle tehdit bilgisi paylaşımı. Bir sitede tespit, hepsinde engel.", color: "blue" },
-              { icon: Activity, title: "Gerçek Zamanlı İzleme", desc: "Canlı dashboard ile anlık saldırı tespiti ve otomatik engelleme.", color: "cyan" },
-              { icon: BarChart3, title: "Detaylı Analitik", desc: "Şehir, cihaz, saat bazlı detaylı raporlar ve indirilebilir analizler.", color: "orange" },
-              { icon: Zap, title: "Kolay Entegrasyon", desc: "Tek satır kod ile sitenize entegre edin. 5 dakikada koruma başlasın.", color: "green" },
-              { icon: Target, title: "Google Ads Entegrasyonu", desc: "Tespit edilen IP'leri otomatik olarak Google Ads'e gönderin.", color: "red" },
-            ].map((f, i) => (
-              <div key={i} className="p-6 bg-slate-900/50 border border-slate-800 rounded-xl hover:border-slate-700 transition-all">
-                <f.icon className={`h-10 w-10 text-${f.color}-400 mb-4`} />
-                <h3 className="text-lg font-semibold mb-2">{f.title}</h3>
-                <p className="text-gray-400 text-sm">{f.desc}</p>
+              { icon: Shield, title: "Gerçek Zamanlı Bot Tespiti", desc: "Yapay zeka ile bot trafiğini anında tespit edin. Datacenter IP, VPN, Proxy ve TOR çıkışlarını otomatik engelleyin.", color: "purple", gradient: "from-purple-600/20 to-purple-600/0" },
+              { icon: Hash, title: "IP & Cihaz Parmak İzi", desc: "Canvas, WebGL, font listesi ve 50+ parametre ile benzersiz cihaz kimliği oluşturun. Sahte cihazları tespit edin.", color: "blue", gradient: "from-blue-600/20 to-blue-600/0" },
+              { icon: Layers, title: "Havuz Tabanlı Koruma", desc: "Sektör ve şehir bazlı havuzlarda tehdit bilgisi paylaşımı. Bir sitede tespit edilen IP, tüm havuzda engellenir.", color: "cyan", gradient: "from-cyan-600/20 to-cyan-600/0" },
+              { icon: Target, title: "Google Ads GCLID Doğrulama", desc: "Google Ads tıklama ID'lerini doğrulayın. Manipüle edilmiş veya eksik GCLID'leri tespit edin.", color: "orange", gradient: "from-orange-600/20 to-orange-600/0" },
+              { icon: Zap, title: "Otomatik Engelleme", desc: "Risk skoru eşiğini aşan trafik otomatik engellenir. Manuel müdahale gerektirmez, 7/24 koruma sağlar.", color: "green", gradient: "from-emerald-600/20 to-emerald-600/0" },
+              { icon: BarChart3, title: "Detaylı Analitik", desc: "Şehir, cihaz, saat bazlı detaylı raporlar. PDF ve Excel formatında indirilebilir analizler.", color: "pink", gradient: "from-pink-600/20 to-pink-600/0" },
+            ].map((feature, i) => (
+              <div key={i} className={`group relative overflow-hidden bg-[#12121a]/50 backdrop-blur-sm border border-white/5 hover:border-white/10 rounded-2xl p-6 transition-all duration-300`}>
+                <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-100 transition-opacity`} />
+                <div className="relative">
+                  <div className={`inline-flex p-3 rounded-xl bg-${feature.color}-500/10 text-${feature.color}-400 mb-4 group-hover:scale-110 transition-transform`}>
+                    <feature.icon className="h-6 w-6" />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
+                  <p className="text-gray-400 text-sm leading-relaxed">{feature.desc}</p>
+                </div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Pricing */}
-      <section id="pricing" className="py-20 px-8 bg-slate-900/50">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-4">Fiyatlandırma</h2>
-          <p className="text-gray-400 text-center mb-12">İhtiyacınıza uygun paketi seçin</p>
-          <div className="grid grid-cols-3 gap-8">
+      {/* How It Works */}
+      <section id="how-it-works" className="relative z-10 py-24 px-6 bg-gradient-to-b from-transparent via-purple-900/5 to-transparent">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <span className="text-purple-400 text-sm font-medium uppercase tracking-wider">Nasıl Çalışır</span>
+            <h2 className="text-4xl font-bold mt-4 mb-4">4 Adımda Koruma</h2>
+            <p className="text-gray-400 max-w-2xl mx-auto">
+              Tek satır kod ile entegre edin, gerisini biz halledelim.
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-4 gap-8">
             {[
-              { name: "Starter", price: "₺499", period: "/ay", features: ["3 site", "10.000 ziyaretçi/ay", "Temel koruma", "Email destek"], popular: false },
-              { name: "Professional", price: "₺999", period: "/ay", features: ["10 site", "50.000 ziyaretçi/ay", "Gelişmiş koruma", "Havuz erişimi", "Öncelikli destek"], popular: true },
-              { name: "Enterprise", price: "₺2.499", period: "/ay", features: ["Sınırsız site", "Sınırsız ziyaretçi", "Tam koruma", "API erişimi", "Özel destek", "SLA garantisi"], popular: false },
-            ].map((p, i) => (
-              <div key={i} className={`p-6 rounded-xl border ${p.popular ? 'bg-purple-600/10 border-purple-500/50' : 'bg-slate-900 border-slate-800'}`}>
-                {p.popular && <span className="text-xs text-purple-400 font-medium">EN POPÜLER</span>}
-                <h3 className="text-xl font-bold mt-2">{p.name}</h3>
-                <p className="text-3xl font-bold mt-4">{p.price}<span className="text-sm text-gray-400">{p.period}</span></p>
-                <ul className="mt-6 space-y-3">
-                  {p.features.map((f, j) => (
+              { step: "01", title: "Tracker Kurulumu", desc: "Sitenize tek satır JavaScript kodu ekleyin. 5 dakikada kurulum tamamlanır.", icon: Globe, color: "purple" },
+              { step: "02", title: "Trafik Analizi", desc: "Her ziyaretçinin IP, cihaz, davranış ve fingerprint verilerini analiz ediyoruz.", icon: Activity, color: "blue" },
+              { step: "03", title: "Risk Skorlama", desc: "5 katmanlı AI motoru ile 0-100 arası risk skoru hesaplıyoruz.", icon: AlertTriangle, color: "orange" },
+              { step: "04", title: "Otomatik Engelleme", desc: "Yüksek riskli trafik anında engellenir, reklam bütçeniz korunur.", icon: ShieldCheck, color: "green" },
+            ].map((item, i) => (
+              <div key={i} className="relative">
+                <div className={`text-6xl font-bold text-${item.color}-500/10 absolute -top-4 -left-2`}>{item.step}</div>
+                <div className="relative bg-[#12121a]/50 backdrop-blur-sm border border-white/5 rounded-2xl p-6 h-full">
+                  <div className={`inline-flex p-3 rounded-xl bg-${item.color}-500/10 text-${item.color}-400 mb-4`}>
+                    <item.icon className="h-6 w-6" />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">{item.title}</h3>
+                  <p className="text-gray-400 text-sm">{item.desc}</p>
+                </div>
+                {i < 3 && (
+                  <div className="hidden md:block absolute top-1/2 -right-4 w-8 h-0.5 bg-gradient-to-r from-white/20 to-transparent" />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Dashboard Preview Section */}
+      <section id="dashboard" className="relative z-10 py-24 px-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <span className="text-purple-400 text-sm font-medium uppercase tracking-wider">Dashboard</span>
+            <h2 className="text-4xl font-bold mt-4 mb-4">Güçlü Analitik Paneli</h2>
+            <p className="text-gray-400 max-w-2xl mx-auto">
+              Tüm verileri tek bir yerden izleyin, analiz edin ve raporlayın.
+            </p>
+          </div>
+          
+          {/* Full Dashboard Preview */}
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-600/10 via-blue-600/10 to-cyan-600/10 rounded-3xl blur-3xl" />
+            <div className="relative bg-[#0d0d14] border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
+              {/* Dashboard Header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-black/30">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-6 w-6 text-purple-400" />
+                    <span className="font-bold">AdsKalkan</span>
+                  </div>
+                  <div className="flex items-center gap-1 px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 rounded-full">
+                    <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-xs text-emerald-400">Canlı İzleme</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4 text-sm text-gray-400">
+                  <span className="flex items-center gap-2"><Calendar className="h-4 w-4" /> Son 7 Gün</span>
+                  <button className="flex items-center gap-2 px-3 py-1.5 bg-white/5 rounded-lg hover:bg-white/10">
+                    <Download className="h-4 w-4" /> Export
+                  </button>
+                </div>
+              </div>
+              
+              <div className="p-6">
+                {/* KPI Row */}
+                <div className="grid grid-cols-6 gap-4 mb-6">
+                  {[
+                    { label: 'Toplam Ziyaretçi', value: '24,847', change: '+12.5%', up: true, icon: Eye, color: 'blue' },
+                    { label: 'Engellenen', value: '6,218', change: '+8.3%', up: true, icon: Ban, color: 'red' },
+                    { label: 'İzin Verilen', value: '18,629', change: '+15.2%', up: true, icon: CheckCircle, color: 'green' },
+                    { label: 'Koruma Oranı', value: '%25.0', change: '-2.1%', up: false, icon: Shield, color: 'purple' },
+                    { label: 'Engelli IP', value: '1,842', change: '+5.7%', up: true, icon: AlertTriangle, color: 'orange' },
+                    { label: 'Tahmini Tasarruf', value: '₺15,545', change: '+18.4%', up: true, icon: TrendingUp, color: 'cyan' },
+                  ].map((kpi, i) => (
+                    <div key={i} className={`bg-${kpi.color}-500/5 border border-${kpi.color}-500/20 rounded-xl p-4`}>
+                      <div className="flex items-start justify-between mb-2">
+                        <kpi.icon className={`h-5 w-5 text-${kpi.color}-400`} />
+                        <span className={`text-xs ${kpi.up ? 'text-emerald-400' : 'text-red-400'}`}>{kpi.change}</span>
+                      </div>
+                      <p className="text-2xl font-bold text-white">{kpi.value}</p>
+                      <p className="text-xs text-gray-500 mt-1">{kpi.label}</p>
+                    </div>
+                  ))}
+                </div>
+                
+                {/* Charts Row */}
+                <div className="grid grid-cols-3 gap-6 mb-6">
+                  {/* Traffic Chart */}
+                  <div className="col-span-2 bg-black/30 border border-white/5 rounded-xl p-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-medium flex items-center gap-2"><BarChart3 className="h-4 w-4 text-purple-400" /> Günlük Trafik</h3>
+                      <div className="flex items-center gap-4 text-xs">
+                        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-red-500" />Engellenen</span>
+                        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-emerald-500" />İzin Verilen</span>
+                      </div>
+                    </div>
+                    <div className="flex items-end gap-2 h-40">
+                      {Array.from({ length: 14 }, (_, i) => {
+                        const blocked = Math.floor(Math.random() * 400) + 100;
+                        const allowed = Math.floor(Math.random() * 800) + 400;
+                        return (
+                          <div key={i} className="flex-1 flex flex-col gap-1">
+                            <div className="flex-1 flex flex-col justify-end gap-0.5">
+                              <div className="bg-red-500 rounded-t" style={{ height: `${(blocked / 500) * 100}%` }} />
+                              <div className="bg-emerald-500/70 rounded-b" style={{ height: `${(allowed / 1200) * 100}%` }} />
+                            </div>
+                            <span className="text-[9px] text-gray-600 text-center">{i + 1}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  
+                  {/* Risk Distribution */}
+                  <div className="bg-black/30 border border-white/5 rounded-xl p-4">
+                    <h3 className="font-medium flex items-center gap-2 mb-4"><PieChart className="h-4 w-4 text-orange-400" /> Risk Dağılımı</h3>
+                    <div className="flex items-center justify-center gap-6">
+                      <svg viewBox="0 0 100 100" className="w-28 h-28">
+                        <circle cx="50" cy="50" r="40" fill="none" stroke="#22c55e" strokeWidth="20" strokeDasharray="62.8 188.4" transform="rotate(-90 50 50)" />
+                        <circle cx="50" cy="50" r="40" fill="none" stroke="#eab308" strokeWidth="20" strokeDasharray="50.2 188.4" strokeDashoffset="-62.8" transform="rotate(-90 50 50)" />
+                        <circle cx="50" cy="50" r="40" fill="none" stroke="#f97316" strokeWidth="20" strokeDasharray="37.7 188.4" strokeDashoffset="-113" transform="rotate(-90 50 50)" />
+                        <circle cx="50" cy="50" r="40" fill="none" stroke="#ef4444" strokeWidth="20" strokeDasharray="37.7 188.4" strokeDashoffset="-150.7" transform="rotate(-90 50 50)" />
+                        <circle cx="50" cy="50" r="25" fill="#0d0d14" />
+                      </svg>
+                      <div className="space-y-2 text-xs">
+                        <div className="flex items-center gap-2"><span className="w-3 h-3 rounded bg-emerald-500" />Düşük: 8,420</div>
+                        <div className="flex items-center gap-2"><span className="w-3 h-3 rounded bg-yellow-500" />Orta: 6,842</div>
+                        <div className="flex items-center gap-2"><span className="w-3 h-3 rounded bg-orange-500" />Yüksek: 5,124</div>
+                        <div className="flex items-center gap-2"><span className="w-3 h-3 rounded bg-red-500" />Kritik: 4,461</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Data Table */}
+                <div className="bg-black/30 border border-white/5 rounded-xl overflow-hidden">
+                  <div className="px-4 py-3 border-b border-white/5 flex items-center justify-between">
+                    <h3 className="font-medium flex items-center gap-2"><Eye className="h-4 w-4 text-blue-400" /> Son Ziyaretçiler</h3>
+                    <div className="flex items-center gap-2">
+                      <div className="relative">
+                        <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-gray-500" />
+                        <input type="text" placeholder="Ara..." className="pl-7 pr-3 py-1.5 bg-white/5 border border-white/10 rounded text-xs w-40" />
+                      </div>
+                      <button className="flex items-center gap-1 px-2 py-1.5 bg-white/5 border border-white/10 rounded text-xs">
+                        <Filter className="h-3 w-3" /> Filtre
+                      </button>
+                    </div>
+                  </div>
+                  <table className="w-full text-sm">
+                    <thead className="bg-white/5 text-xs text-gray-500 uppercase">
+                      <tr>
+                        <th className="px-4 py-3 text-left">Tarih</th>
+                        <th className="px-4 py-3 text-left">Website</th>
+                        <th className="px-4 py-3 text-left">IP Adresi</th>
+                        <th className="px-4 py-3 text-left">Şehir</th>
+                        <th className="px-4 py-3 text-left">Cihaz</th>
+                        <th className="px-4 py-3 text-left">Süre</th>
+                        <th className="px-4 py-3 text-left">Risk</th>
+                        <th className="px-4 py-3 text-left">Durum</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {mockTableData.map((row, i) => (
+                        <tr key={i} className="hover:bg-white/5">
+                          <td className="px-4 py-3 text-gray-400 text-xs">{row.date}</td>
+                          <td className="px-4 py-3 text-purple-400">{row.site}</td>
+                          <td className="px-4 py-3 font-mono text-white">{row.ip}</td>
+                          <td className="px-4 py-3 text-gray-400">{row.city}</td>
+                          <td className="px-4 py-3 text-gray-400">{row.device}</td>
+                          <td className="px-4 py-3 text-gray-400">{row.time}</td>
+                          <td className="px-4 py-3">
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${row.risk >= 70 ? 'bg-red-500/20 text-red-400' : row.risk >= 30 ? 'bg-yellow-500/20 text-yellow-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
+                              {row.risk}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${row.status === 'blocked' ? 'bg-red-500/20 text-red-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
+                              {row.status === 'blocked' ? 'Engellendi' : 'İzin'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section id="pricing" className="relative z-10 py-24 px-6 bg-gradient-to-b from-transparent via-blue-900/5 to-transparent">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <span className="text-purple-400 text-sm font-medium uppercase tracking-wider">Fiyatlandırma</span>
+            <h2 className="text-4xl font-bold mt-4 mb-4">Şeffaf Fiyatlar</h2>
+            <p className="text-gray-400 max-w-2xl mx-auto">
+              İhtiyacınıza uygun paketi seçin. Tüm paketlerde 7 gün ücretsiz deneme.
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {[
+              { 
+                name: "Starter", 
+                price: "₺499", 
+                period: "/ay", 
+                desc: "Küçük işletmeler için",
+                features: ["3 site", "10.000 ziyaretçi/ay", "Temel koruma", "Email destek", "7 gün veri saklama"],
+                popular: false,
+                cta: "Başla"
+              },
+              { 
+                name: "Professional", 
+                price: "₺999", 
+                period: "/ay",
+                desc: "Büyüyen işletmeler için", 
+                features: ["10 site", "50.000 ziyaretçi/ay", "Gelişmiş koruma", "Havuz erişimi", "Öncelikli destek", "30 gün veri saklama", "API erişimi"],
+                popular: true,
+                cta: "Ücretsiz Dene"
+              },
+              { 
+                name: "Enterprise", 
+                price: "₺2.499", 
+                period: "/ay",
+                desc: "Kurumsal şirketler için", 
+                features: ["Sınırsız site", "Sınırsız ziyaretçi", "Tam koruma", "Özel havuz", "7/24 destek", "90 gün veri saklama", "Tam API erişimi", "SLA garantisi"],
+                popular: false,
+                cta: "İletişime Geç"
+              },
+            ].map((plan, i) => (
+              <div key={i} className={`relative rounded-2xl p-6 ${plan.popular ? 'bg-gradient-to-b from-purple-600/20 to-blue-600/10 border-2 border-purple-500/50' : 'bg-[#12121a]/50 border border-white/5'}`}>
+                {plan.popular && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full text-xs font-medium">
+                    En Popüler
+                  </div>
+                )}
+                <div className="mb-6">
+                  <h3 className="text-xl font-bold">{plan.name}</h3>
+                  <p className="text-gray-500 text-sm mt-1">{plan.desc}</p>
+                </div>
+                <div className="mb-6">
+                  <span className="text-4xl font-bold">{plan.price}</span>
+                  <span className="text-gray-500">{plan.period}</span>
+                </div>
+                <ul className="space-y-3 mb-8">
+                  {plan.features.map((feature, j) => (
                     <li key={j} className="flex items-center gap-2 text-sm text-gray-300">
-                      <CheckCircle className="h-4 w-4 text-emerald-400" />
-                      {f}
+                      <CheckCircle className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+                      {feature}
                     </li>
                   ))}
                 </ul>
-                <button onClick={onLogin} className={`w-full mt-6 py-3 rounded-lg font-medium ${p.popular ? 'bg-purple-600 hover:bg-purple-500' : 'bg-slate-800 hover:bg-slate-700'}`}>
-                  Başla
+                <button onClick={onLogin} className={`w-full py-3 rounded-xl font-medium transition-all ${plan.popular ? 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 shadow-lg shadow-purple-500/25' : 'bg-white/5 hover:bg-white/10 border border-white/10'}`}>
+                  {plan.cta}
                 </button>
               </div>
             ))}
@@ -569,61 +960,104 @@ const PublicWebsite = ({ onLogin }) => {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-20 px-8">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-4">Reklam Bütçenizi Korumaya Başlayın</h2>
-          <p className="text-gray-400 mb-8">7 gün ücretsiz deneme ile AdsKalkan'ı test edin. Kredi kartı gerekmez.</p>
-          <button onClick={onLogin} className="px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 rounded-xl text-lg font-medium">
-            Ücretsiz Başla
-          </button>
+      {/* CTA Section */}
+      <section className="relative z-10 py-24 px-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="relative overflow-hidden bg-gradient-to-r from-purple-600/20 via-blue-600/20 to-cyan-600/20 border border-white/10 rounded-3xl p-12 text-center">
+            <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:30px_30px]" />
+            <div className="relative">
+              <h2 className="text-4xl font-bold mb-4">Reklam Bütçenizi Korumaya Başlayın</h2>
+              <p className="text-gray-400 mb-8 text-lg">
+                7 gün ücretsiz deneme ile AdsKalkan'ı test edin. Kredi kartı gerekmez.
+              </p>
+              <div className="flex gap-4 justify-center">
+                <button onClick={onLogin} className="px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 rounded-xl text-lg font-medium shadow-lg shadow-purple-500/25 flex items-center gap-2">
+                  <Zap className="h-5 w-5" />
+                  Ücretsiz Başla
+                </button>
+                <button className="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-lg font-medium flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Demo Randevusu
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer id="contact" className="border-t border-slate-800 py-12 px-8">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-4 gap-8">
-            <div>
+      <footer className="relative z-10 border-t border-white/5 py-16 px-6 bg-black/30">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid md:grid-cols-5 gap-12">
+            <div className="md:col-span-2">
               <div className="flex items-center gap-2 mb-4">
-                <Shield className="h-6 w-6 text-purple-500" />
-                <span className="font-bold">AdsKalkan</span>
+                <Shield className="h-8 w-8 text-purple-500" />
+                <span className="text-xl font-bold">AdsKalkan</span>
               </div>
-              <p className="text-sm text-gray-400">Google Ads sahte tıklama koruma platformu.</p>
+              <p className="text-gray-400 text-sm mb-6 max-w-xs">
+                Google Ads sahte tıklama koruma platformu. Yapay zeka destekli gerçek zamanlı tehdit tespiti.
+              </p>
+              <div className="flex items-center gap-4">
+                <a href="#" className="w-10 h-10 bg-white/5 hover:bg-white/10 rounded-lg flex items-center justify-center transition-colors">
+                  <Globe className="h-5 w-5 text-gray-400" />
+                </a>
+                <a href="#" className="w-10 h-10 bg-white/5 hover:bg-white/10 rounded-lg flex items-center justify-center transition-colors">
+                  <Mail className="h-5 w-5 text-gray-400" />
+                </a>
+              </div>
             </div>
+            
             <div>
               <h4 className="font-semibold mb-4">Ürün</h4>
-              <ul className="space-y-2 text-sm text-gray-400">
-                <li><a href="#" className="hover:text-white">Özellikler</a></li>
-                <li><a href="#" className="hover:text-white">Fiyatlar</a></li>
-                <li><a href="#" className="hover:text-white">API</a></li>
+              <ul className="space-y-3 text-sm text-gray-400">
+                <li><a href="#features" className="hover:text-white transition-colors">Özellikler</a></li>
+                <li><a href="#pricing" className="hover:text-white transition-colors">Fiyatlar</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">API Dokümantasyonu</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Entegrasyonlar</a></li>
               </ul>
             </div>
+            
             <div>
               <h4 className="font-semibold mb-4">Şirket</h4>
-              <ul className="space-y-2 text-sm text-gray-400">
-                <li><a href="#" className="hover:text-white">Hakkımızda</a></li>
-                <li><a href="#" className="hover:text-white">Blog</a></li>
-                <li><a href="#" className="hover:text-white">Kariyer</a></li>
+              <ul className="space-y-3 text-sm text-gray-400">
+                <li><a href="#" className="hover:text-white transition-colors">Hakkımızda</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Kariyer</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Basın</a></li>
               </ul>
             </div>
+            
             <div>
               <h4 className="font-semibold mb-4">İletişim</h4>
-              <ul className="space-y-2 text-sm text-gray-400">
+              <ul className="space-y-3 text-sm text-gray-400">
                 <li>info@adskalkan.com</li>
                 <li>+90 212 123 45 67</li>
                 <li>Istanbul, Türkiye</li>
+                <li><button onClick={onLogin} className="text-purple-400 hover:text-purple-300 transition-colors">Giriş Yap →</button></li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-slate-800 mt-8 pt-8 text-center text-sm text-gray-500">
-            © 2024 AdsKalkan. Tüm hakları saklıdır.
+          
+          <div className="border-t border-white/5 mt-12 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+            <p className="text-gray-500 text-sm">© 2025 AdsKalkan. Tüm hakları saklıdır.</p>
+            <div className="flex items-center gap-6 text-sm text-gray-500">
+              <a href="#" className="hover:text-white transition-colors">Gizlilik Politikası</a>
+              <a href="#" className="hover:text-white transition-colors">Kullanım Şartları</a>
+              <a href="#" className="hover:text-white transition-colors">KVKK</a>
+            </div>
           </div>
         </div>
       </footer>
     </div>
   );
 };
+
+// Mail icon for footer
+const Mail = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="4" width="20" height="16" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+  </svg>
+);
 
 // ==================== LOGIN ====================
 const LoginPage = ({ onSuccess, onBack }) => {
