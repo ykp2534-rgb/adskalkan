@@ -1,12 +1,13 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import {
   Shield, Users, Globe, Eye, Activity, BarChart3, PieChart, TrendingUp,
   Download, Filter, Search, ChevronDown, ChevronUp, ChevronLeft, ChevronRight,
   Calendar, RefreshCw, Settings, LogOut, User, Layers, Ban, FileText,
-  AlertTriangle, CheckCircle, XCircle, Clock, Smartphone, Laptop, Tablet,
-  MapPin, MousePointer, Timer, Package, Megaphone, Server, Home, MoreHorizontal,
-  ArrowUpRight, ArrowDownRight, X, Check
+  AlertTriangle, CheckCircle, Clock, Smartphone, Laptop, Tablet,
+  MapPin, MousePointer, Timer, Package, Megaphone, Server, Home,
+  ArrowUpRight, ArrowDownRight, Zap, Target, Database, BarChart2,
+  TrendingDown, AlertCircle, ShieldCheck, ShieldX, Crosshair, Hash
 } from "lucide-react";
 import "./App.css";
 
@@ -20,182 +21,284 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// ==================== MOCK DATA ====================
-const generateMockVisitors = (count) => {
-  const cities = ['Istanbul', 'Ankara', 'Izmir', 'Bursa', 'Antalya', 'Adana', 'Frankfurt', 'Amsterdam', 'London', 'New York'];
-  const countries = ['Turkey', 'Turkey', 'Turkey', 'Turkey', 'Turkey', 'Turkey', 'Germany', 'Netherlands', 'UK', 'USA'];
-  const devices = ['desktop', 'mobile', 'tablet'];
-  const browsers = ['Chrome', 'Firefox', 'Safari', 'Edge', 'Opera'];
-  const os = ['Windows', 'macOS', 'Android', 'iOS', 'Linux'];
-  const sites = ['demo-tesisatci.com', 'example-plumber.com', 'istanbul-tesisat.com', 'ankara-su.com'];
-  const siteNames = ['Demo Tesisatci', 'Example Plumber', 'Istanbul Tesisat', 'Ankara Su'];
-  const riskLevels = ['low', 'medium', 'high', 'critical'];
-  
+// ==================== MOCK DATA - DAHA FAZLA VERİ ====================
+const CITIES = ['Istanbul', 'Ankara', 'Izmir', 'Bursa', 'Antalya', 'Adana', 'Konya', 'Gaziantep', 'Mersin', 'Kayseri', 'Eskisehir', 'Diyarbakir'];
+const COUNTRIES = ['Türkiye', 'Türkiye', 'Türkiye', 'Türkiye', 'Türkiye', 'Türkiye', 'Türkiye', 'Türkiye', 'Türkiye', 'Türkiye', 'Türkiye', 'Türkiye'];
+const DEVICES = ['desktop', 'mobile', 'tablet'];
+const BROWSERS = ['Chrome', 'Firefox', 'Safari', 'Edge', 'Opera', 'Samsung Internet', 'UC Browser'];
+const OS_LIST = ['Windows 11', 'Windows 10', 'macOS', 'Android 13', 'Android 12', 'iOS 17', 'iOS 16', 'Linux'];
+const SITES = [
+  { id: 's1', name: 'Istanbul Tesisat', domain: 'istanbul-tesisat.com', pool: 'Istanbul Tesisatçılar' },
+  { id: 's2', name: 'Ankara Su Tesisatı', domain: 'ankara-su.com', pool: 'Ankara Tesisatçılar' },
+  { id: 's3', name: 'Izmir Elektrik', domain: 'izmir-elektrik.com', pool: 'Izmir Elektrikçiler' },
+  { id: 's4', name: 'Bursa Tesisat', domain: 'bursa-tesisat.com', pool: 'Bursa Tesisatçılar' },
+  { id: 's5', name: 'Antalya Klima', domain: 'antalya-klima.com', pool: 'Antalya Klimacılar' },
+  { id: 's6', name: 'Konya Elektrik', domain: 'konya-elektrik.com', pool: 'Konya Elektrikçiler' },
+  { id: 's7', name: 'Adana Tesisat', domain: 'adana-tesisat.com', pool: 'Adana Tesisatçılar' },
+  { id: 's8', name: 'Gaziantep Su', domain: 'gaziantep-su.com', pool: 'Gaziantep Tesisatçılar' },
+];
+const IP_TYPES = ['residential', 'datacenter', 'vpn', 'proxy', 'tor'];
+const RISK_REASONS = [
+  'Datacenter IP tespit edildi',
+  'VPN/Proxy kullanımı',
+  'Çok kısa sayfa süresi',
+  'Mouse hareketi yok',
+  'Bot User-Agent',
+  'Tekrarlı IP ziyareti',
+  'Şüpheli tıklama paterni',
+  'Headless browser',
+  'Aynı IP farklı cihazlar',
+  'TOR ağı tespit edildi'
+];
+
+const generateVisitors = (count) => {
   return Array.from({ length: count }, (_, i) => {
-    const siteIdx = Math.floor(Math.random() * sites.length);
-    const cityIdx = Math.floor(Math.random() * cities.length);
+    const site = SITES[Math.floor(Math.random() * SITES.length)];
+    const cityIdx = Math.floor(Math.random() * CITIES.length);
     const riskScore = Math.floor(Math.random() * 100);
     const riskLevel = riskScore >= 70 ? 'critical' : riskScore >= 50 ? 'high' : riskScore >= 30 ? 'medium' : 'low';
     const isBlocked = riskScore >= 50;
+    const ipType = IP_TYPES[Math.floor(Math.random() * IP_TYPES.length)];
+    const timeOnPage = Math.floor(Math.random() * 180);
+    const scrollDepth = Math.floor(Math.random() * 100);
+    const mouseMovements = Math.floor(Math.random() * 500);
+    const clickCount = Math.floor(Math.random() * 15);
+    
+    const riskFactors = [];
+    if (ipType !== 'residential') riskFactors.push(RISK_REASONS[Math.floor(Math.random() * 3)]);
+    if (timeOnPage < 5) riskFactors.push('Çok kısa sayfa süresi');
+    if (mouseMovements < 10) riskFactors.push('Mouse hareketi yok');
+    if (Math.random() > 0.7) riskFactors.push(RISK_REASONS[Math.floor(Math.random() * RISK_REASONS.length)]);
     
     return {
-      id: `visitor-${i}`,
+      id: `v${i}`,
       ip_address: `${Math.floor(Math.random() * 200) + 50}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
-      site_id: `site-${siteIdx}`,
-      site_name: siteNames[siteIdx],
-      domain: sites[siteIdx],
-      city: cities[cityIdx],
-      country: countries[cityIdx],
-      device_type: devices[Math.floor(Math.random() * devices.length)],
-      device_brand: ['Samsung', 'Apple', 'Dell', 'HP', 'Lenovo'][Math.floor(Math.random() * 5)],
-      browser: browsers[Math.floor(Math.random() * browsers.length)],
-      os: os[Math.floor(Math.random() * os.length)],
-      time_on_page: Math.floor(Math.random() * 120) + 1,
-      scroll_depth: Math.floor(Math.random() * 100),
-      mouse_movements: Math.floor(Math.random() * 500),
-      click_count: Math.floor(Math.random() * 20),
+      site_id: site.id,
+      site_name: site.name,
+      domain: site.domain,
+      pool: site.pool,
+      city: CITIES[cityIdx],
+      country: COUNTRIES[cityIdx],
+      device_type: DEVICES[Math.floor(Math.random() * DEVICES.length)],
+      device_brand: ['Samsung', 'Apple', 'Dell', 'HP', 'Lenovo', 'Xiaomi', 'Huawei', 'Asus'][Math.floor(Math.random() * 8)],
+      device_model: ['Galaxy S23', 'iPhone 15', 'XPS 15', 'EliteBook', 'ThinkPad', 'Mi 13', 'P60', 'ZenBook'][Math.floor(Math.random() * 8)],
+      browser: BROWSERS[Math.floor(Math.random() * BROWSERS.length)],
+      browser_version: `${Math.floor(Math.random() * 50) + 80}.0.${Math.floor(Math.random() * 9999)}`,
+      os: OS_LIST[Math.floor(Math.random() * OS_LIST.length)],
+      screen_resolution: ['1920x1080', '1366x768', '2560x1440', '1536x864', '390x844', '412x915'][Math.floor(Math.random() * 6)],
+      ip_type: ipType,
+      isp: ['Türk Telekom', 'Turkcell', 'Vodafone', 'Superonline', 'Google Cloud', 'AWS', 'DigitalOcean', 'NordVPN'][Math.floor(Math.random() * 8)],
+      time_on_page: timeOnPage,
+      scroll_depth: scrollDepth,
+      mouse_movements: mouseMovements,
+      click_count: clickCount,
+      page_views: Math.floor(Math.random() * 8) + 1,
+      referer: ['google.com', 'direct', 'facebook.com', 'instagram.com', 'twitter.com', 'bing.com'][Math.floor(Math.random() * 6)],
+      gclid: Math.random() > 0.3 ? `CL${Math.random().toString(36).substr(2, 20)}` : null,
       risk_score: riskScore,
       risk_level: riskLevel,
+      risk_factors: riskFactors,
       is_blocked: isBlocked,
-      created_at: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
+      blocked_reason: isBlocked ? riskFactors[0] || 'Yüksek risk skoru' : null,
+      created_at: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
+      session_id: `sess_${Math.random().toString(36).substr(2, 12)}`,
     };
   });
 };
 
-const MOCK_VISITORS = generateMockVisitors(500);
+const MOCK_VISITORS = generateVisitors(2000);
 
-const MOCK_SITES = [
-  { id: 'site-0', name: 'Demo Tesisatci', domain: 'demo-tesisatci.com', pool: 'Istanbul Tesisatçılar', total_visitors: 1250, blocked_visitors: 380, protection_rate: 30.4, last_activity: '2024-01-15T14:30:00Z', is_active: true },
-  { id: 'site-1', name: 'Example Plumber', domain: 'example-plumber.com', pool: 'Ankara Tesisatçılar', total_visitors: 890, blocked_visitors: 156, protection_rate: 17.5, last_activity: '2024-01-15T12:15:00Z', is_active: true },
-  { id: 'site-2', name: 'Istanbul Tesisat', domain: 'istanbul-tesisat.com', pool: 'Istanbul Tesisatçılar', total_visitors: 2100, blocked_visitors: 720, protection_rate: 34.3, last_activity: '2024-01-15T13:45:00Z', is_active: true },
-  { id: 'site-3', name: 'Ankara Su', domain: 'ankara-su.com', pool: 'Ankara Tesisatçılar', total_visitors: 650, blocked_visitors: 98, protection_rate: 15.1, last_activity: '2024-01-14T18:20:00Z', is_active: false },
-];
+const MOCK_SITES = SITES.map((s, i) => {
+  const visitors = MOCK_VISITORS.filter(v => v.site_id === s.id);
+  const blocked = visitors.filter(v => v.is_blocked);
+  return {
+    ...s,
+    total_visitors: visitors.length,
+    blocked_visitors: blocked.length,
+    allowed_visitors: visitors.length - blocked.length,
+    protection_rate: visitors.length > 0 ? ((blocked.length / visitors.length) * 100).toFixed(1) : 0,
+    avg_risk_score: visitors.length > 0 ? (visitors.reduce((sum, v) => sum + v.risk_score, 0) / visitors.length).toFixed(1) : 0,
+    last_activity: new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000).toISOString(),
+    is_active: Math.random() > 0.1,
+    tracker_installed: Math.random() > 0.05,
+    daily_limit: 10000,
+    monthly_limit: 300000,
+  };
+});
 
 const MOCK_POOLS = [
-  { id: 'pool-1', name: 'Istanbul Tesisatçılar', sector: 'Tesisatçılık', city: 'Istanbul', sites_count: 12, blocked_ips: 1250, blocked_clicks: 4800, is_active: true },
-  { id: 'pool-2', name: 'Ankara Tesisatçılar', sector: 'Tesisatçılık', city: 'Ankara', sites_count: 8, blocked_ips: 680, blocked_clicks: 2100, is_active: true },
-  { id: 'pool-3', name: 'Izmir Elektrikçiler', sector: 'Elektrik', city: 'Izmir', sites_count: 15, blocked_ips: 920, blocked_clicks: 3500, is_active: true },
-  { id: 'pool-4', name: 'Istanbul Avukatlar', sector: 'Hukuk', city: 'Istanbul', sites_count: 22, blocked_ips: 1800, blocked_clicks: 6200, is_active: true },
+  { id: 'p1', name: 'Istanbul Tesisatçılar', sector: 'Tesisatçılık', city: 'Istanbul', sites_count: 45, blocked_ips: 12500, blocked_clicks: 48000, shared_threats: 3200, is_active: true, created_at: '2024-01-01' },
+  { id: 'p2', name: 'Ankara Tesisatçılar', sector: 'Tesisatçılık', city: 'Ankara', sites_count: 28, blocked_ips: 6800, blocked_clicks: 21000, shared_threats: 1800, is_active: true, created_at: '2024-01-05' },
+  { id: 'p3', name: 'Izmir Elektrikçiler', sector: 'Elektrik', city: 'Izmir', sites_count: 35, blocked_ips: 9200, blocked_clicks: 35000, shared_threats: 2400, is_active: true, created_at: '2024-01-10' },
+  { id: 'p4', name: 'Bursa Tesisatçılar', sector: 'Tesisatçılık', city: 'Bursa', sites_count: 18, blocked_ips: 4200, blocked_clicks: 15000, shared_threats: 980, is_active: true, created_at: '2024-01-12' },
+  { id: 'p5', name: 'Antalya Klimacılar', sector: 'Klima', city: 'Antalya', sites_count: 22, blocked_ips: 5100, blocked_clicks: 18500, shared_threats: 1200, is_active: true, created_at: '2024-01-15' },
+  { id: 'p6', name: 'Konya Elektrikçiler', sector: 'Elektrik', city: 'Konya', sites_count: 15, blocked_ips: 3400, blocked_clicks: 12000, shared_threats: 750, is_active: true, created_at: '2024-01-18' },
+  { id: 'p7', name: 'Istanbul Avukatlar', sector: 'Hukuk', city: 'Istanbul', sites_count: 68, blocked_ips: 18500, blocked_clicks: 72000, shared_threats: 4800, is_active: true, created_at: '2024-01-02' },
+  { id: 'p8', name: 'Ankara Diş Klinikleri', sector: 'Sağlık', city: 'Ankara', sites_count: 42, blocked_ips: 11200, blocked_clicks: 42000, shared_threats: 2900, is_active: true, created_at: '2024-01-08' },
 ];
+
+const MOCK_BLOCKED_IPS = MOCK_VISITORS.filter(v => v.is_blocked).slice(0, 500).map((v, i) => ({
+  id: `ip${i}`,
+  ip_address: v.ip_address,
+  ip_type: v.ip_type,
+  city: v.city,
+  country: v.country,
+  isp: v.isp,
+  total_visits: Math.floor(Math.random() * 50) + 1,
+  blocked_count: Math.floor(Math.random() * 30) + 1,
+  first_seen: new Date(Date.now() - Math.random() * 60 * 24 * 60 * 60 * 1000).toISOString(),
+  last_seen: v.created_at,
+  risk_score: v.risk_score,
+  risk_level: v.risk_level,
+  blocked_reason: v.blocked_reason,
+  is_global: Math.random() > 0.7,
+  affected_sites: Math.floor(Math.random() * 5) + 1,
+  pool_id: MOCK_POOLS[Math.floor(Math.random() * MOCK_POOLS.length)].id,
+}));
 
 const MOCK_USERS = [
-  { id: 'user-1', full_name: 'Ahmet Yılmaz', email: 'ahmet@example.com', company: 'ABC Tesisat', role: 'customer', status: 'approved', sites_count: 3, created_at: '2024-01-01T10:00:00Z' },
-  { id: 'user-2', full_name: 'Mehmet Demir', email: 'mehmet@example.com', company: 'XYZ Elektrik', role: 'customer', status: 'approved', sites_count: 5, created_at: '2024-01-05T14:30:00Z' },
-  { id: 'user-3', full_name: 'Ayşe Kaya', email: 'ayse@example.com', company: 'Kaya Hukuk', role: 'customer', status: 'pending', sites_count: 0, created_at: '2024-01-14T09:15:00Z' },
-  { id: 'user-4', full_name: 'Super Admin', email: 'ykp2534@gmail.com', company: 'AdsKalkan', role: 'super_admin', status: 'approved', sites_count: 0, created_at: '2024-01-01T00:00:00Z' },
+  { id: 'u1', full_name: 'Ahmet Yılmaz', email: 'ahmet@example.com', company: 'ABC Tesisat Ltd.', phone: '+90 532 111 2233', role: 'customer', status: 'approved', package: 'Professional', sites_count: 3, monthly_visitors: 15000, created_at: '2024-01-01T10:00:00Z', last_login: '2024-01-15T14:30:00Z' },
+  { id: 'u2', full_name: 'Mehmet Demir', email: 'mehmet@example.com', company: 'XYZ Elektrik A.Ş.', phone: '+90 533 222 3344', role: 'customer', status: 'approved', package: 'Enterprise', sites_count: 8, monthly_visitors: 45000, created_at: '2024-01-05T14:30:00Z', last_login: '2024-01-15T09:15:00Z' },
+  { id: 'u3', full_name: 'Ayşe Kaya', email: 'ayse@example.com', company: 'Kaya Hukuk Bürosu', phone: '+90 534 333 4455', role: 'customer', status: 'pending', package: 'Starter', sites_count: 0, monthly_visitors: 0, created_at: '2024-01-14T09:15:00Z', last_login: null },
+  { id: 'u4', full_name: 'Fatma Öz', email: 'fatma@example.com', company: 'Öz Klima Sistemleri', phone: '+90 535 444 5566', role: 'customer', status: 'approved', package: 'Professional', sites_count: 2, monthly_visitors: 8500, created_at: '2024-01-08T11:20:00Z', last_login: '2024-01-14T16:45:00Z' },
+  { id: 'u5', full_name: 'Ali Çelik', email: 'ali@example.com', company: 'Çelik Otomotiv', phone: '+90 536 555 6677', role: 'customer', status: 'suspended', package: 'Starter', sites_count: 1, monthly_visitors: 2000, created_at: '2024-01-10T08:45:00Z', last_login: '2024-01-12T10:00:00Z' },
+  { id: 'u6', full_name: 'Super Admin', email: 'ykp2534@gmail.com', company: 'AdsKalkan', phone: '+90 537 666 7788', role: 'super_admin', status: 'approved', package: 'System', sites_count: 0, monthly_visitors: 0, created_at: '2024-01-01T00:00:00Z', last_login: '2024-01-15T15:00:00Z' },
 ];
 
-// Generate daily stats for charts
-const generateDailyStats = (days) => {
-  return Array.from({ length: days }, (_, i) => {
-    const date = new Date();
-    date.setDate(date.getDate() - (days - 1 - i));
-    const visitors = Math.floor(Math.random() * 500) + 200;
-    const blocked = Math.floor(visitors * (Math.random() * 0.3 + 0.1));
-    return {
-      date: date.toISOString().split('T')[0],
-      visitors,
-      blocked,
-      allowed: visitors - blocked,
-    };
-  });
-};
-
+const generateDailyStats = (days) => Array.from({ length: days }, (_, i) => {
+  const date = new Date(); date.setDate(date.getDate() - (days - 1 - i));
+  const visitors = Math.floor(Math.random() * 2000) + 500;
+  const blocked = Math.floor(visitors * (Math.random() * 0.35 + 0.15));
+  return { date: date.toISOString().split('T')[0], visitors, blocked, allowed: visitors - blocked, savings: (blocked * 2.5).toFixed(0) };
+});
 const DAILY_STATS = generateDailyStats(30);
 
-// ==================== UTILITY FUNCTIONS ====================
-const formatNumber = (num) => num?.toLocaleString('tr-TR') || '0';
-const formatDate = (date) => new Date(date).toLocaleString('tr-TR');
-const formatDateShort = (date) => new Date(date).toLocaleDateString('tr-TR');
+const generateHourlyStats = () => Array.from({ length: 24 }, (_, h) => ({
+  hour: `${h.toString().padStart(2, '0')}:00`,
+  visitors: Math.floor(Math.random() * 200) + 20,
+  blocked: Math.floor(Math.random() * 80) + 5,
+}));
+const HOURLY_STATS = generateHourlyStats();
+
+// ==================== UTILITIES ====================
+const formatNumber = (n) => n?.toLocaleString('tr-TR') || '0';
+const formatDate = (d) => new Date(d).toLocaleString('tr-TR');
+const formatDateShort = (d) => new Date(d).toLocaleDateString('tr-TR');
+const formatCurrency = (n) => `₺${formatNumber(n)}`;
 
 // ==================== COMPONENTS ====================
 
-// KPI Card
-const KPICard = ({ title, value, change, changeType, icon: Icon, color, subtitle }) => {
+// Compact KPI Card
+const KPICard = ({ label, value, subValue, icon: Icon, color, trend, trendValue, small }) => {
   const colors = {
-    blue: { bg: 'bg-blue-500/10', border: 'border-blue-500/20', icon: 'text-blue-400' },
-    green: { bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', icon: 'text-emerald-400' },
-    red: { bg: 'bg-red-500/10', border: 'border-red-500/20', icon: 'text-red-400' },
-    orange: { bg: 'bg-orange-500/10', border: 'border-orange-500/20', icon: 'text-orange-400' },
-    purple: { bg: 'bg-purple-500/10', border: 'border-purple-500/20', icon: 'text-purple-400' },
-    cyan: { bg: 'bg-cyan-500/10', border: 'border-cyan-500/20', icon: 'text-cyan-400' },
+    blue: 'border-blue-500/30 bg-blue-500/5',
+    green: 'border-emerald-500/30 bg-emerald-500/5',
+    red: 'border-red-500/30 bg-red-500/5',
+    orange: 'border-orange-500/30 bg-orange-500/5',
+    purple: 'border-purple-500/30 bg-purple-500/5',
+    cyan: 'border-cyan-500/30 bg-cyan-500/5',
+    yellow: 'border-yellow-500/30 bg-yellow-500/5',
   };
-  const c = colors[color] || colors.blue;
+  const iconColors = {
+    blue: 'text-blue-400', green: 'text-emerald-400', red: 'text-red-400',
+    orange: 'text-orange-400', purple: 'text-purple-400', cyan: 'text-cyan-400', yellow: 'text-yellow-400',
+  };
   
   return (
-    <div className={`${c.bg} ${c.border} border rounded-lg p-4`}>
+    <div className={`border rounded-lg ${colors[color]} ${small ? 'p-3' : 'p-4'}`}>
       <div className="flex items-start justify-between">
-        <div>
-          <p className="text-xs text-gray-400 uppercase tracking-wide">{title}</p>
-          <p className="text-2xl font-bold text-white mt-1">{value}</p>
-          {subtitle && <p className="text-xs text-gray-500 mt-1">{subtitle}</p>}
+        <div className="flex-1 min-w-0">
+          <p className={`text-gray-400 truncate ${small ? 'text-xs' : 'text-xs uppercase tracking-wide'}`}>{label}</p>
+          <p className={`font-bold text-white ${small ? 'text-lg mt-0.5' : 'text-2xl mt-1'}`}>{value}</p>
+          {subValue && <p className="text-xs text-gray-500 mt-0.5">{subValue}</p>}
         </div>
-        <div className={`p-2 rounded-lg ${c.bg}`}>
-          <Icon className={`h-5 w-5 ${c.icon}`} />
-        </div>
+        <Icon className={`${small ? 'h-4 w-4' : 'h-5 w-5'} ${iconColors[color]} flex-shrink-0`} />
       </div>
-      {change !== undefined && (
-        <div className={`flex items-center gap-1 mt-2 text-xs ${changeType === 'up' ? 'text-emerald-400' : 'text-red-400'}`}>
-          {changeType === 'up' ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-          <span>{change}% vs last period</span>
+      {trend && (
+        <div className={`flex items-center gap-1 mt-2 text-xs ${trend === 'up' ? 'text-emerald-400' : 'text-red-400'}`}>
+          {trend === 'up' ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+          <span>{trendValue}</span>
         </div>
       )}
     </div>
   );
 };
 
-// Mini Line Chart
-const MiniLineChart = ({ data, dataKey, color = '#8b5cf6', height = 200 }) => {
-  if (!data || data.length === 0) return null;
-  
-  const maxVal = Math.max(...data.map(d => d[dataKey]));
-  const minVal = Math.min(...data.map(d => d[dataKey]));
-  const range = maxVal - minVal || 1;
-  
-  const points = data.map((d, i) => ({
-    x: (i / (data.length - 1)) * 100,
-    y: 100 - ((d[dataKey] - minVal) / range) * 80 - 10,
-  }));
-  
-  const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
-  const areaD = `${pathD} L 100 100 L 0 100 Z`;
-  
+// Mini Stat
+const MiniStat = ({ label, value, color = 'gray' }) => {
+  const colors = { gray: 'text-gray-400', green: 'text-emerald-400', red: 'text-red-400', orange: 'text-orange-400', blue: 'text-blue-400' };
   return (
-    <svg viewBox="0 0 100 100" className="w-full" style={{ height }} preserveAspectRatio="none">
-      <defs>
-        <linearGradient id={`gradient-${dataKey}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.3" />
-          <stop offset="100%" stopColor={color} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path d={areaD} fill={`url(#gradient-${dataKey})`} />
-      <path d={pathD} fill="none" stroke={color} strokeWidth="2" />
-      {points.map((p, i) => (
-        <circle key={i} cx={p.x} cy={p.y} r="1.5" fill={color} />
-      ))}
-    </svg>
+    <div className="text-center">
+      <p className={`text-lg font-bold ${colors[color]}`}>{value}</p>
+      <p className="text-xs text-gray-500">{label}</p>
+    </div>
   );
 };
 
-// Bar Chart
-const BarChart = ({ data, labelKey, valueKey, color = '#8b5cf6', height = 200 }) => {
-  if (!data || data.length === 0) return null;
-  const maxVal = Math.max(...data.map(d => d[valueKey]));
-  
+// Progress Bar
+const ProgressBar = ({ value, max, color = '#8b5cf6', showLabel = true, height = 6 }) => {
+  const pct = max > 0 ? (value / max) * 100 : 0;
   return (
-    <div className="flex items-end gap-2 justify-between" style={{ height }}>
-      {data.map((item, i) => (
-        <div key={i} className="flex-1 flex flex-col items-center gap-1">
-          <span className="text-xs text-gray-400">{item[valueKey]}</span>
-          <div 
-            className="w-full rounded-t transition-all"
-            style={{ 
-              height: `${(item[valueKey] / maxVal) * (height - 40)}px`,
-              backgroundColor: color,
-              minHeight: 4
-            }}
-          />
-          <span className="text-xs text-gray-500 truncate max-w-full">{item[labelKey]}</span>
+    <div className="w-full">
+      <div className="bg-slate-700 rounded-full overflow-hidden" style={{ height }}>
+        <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: color }} />
+      </div>
+      {showLabel && <p className="text-xs text-gray-500 mt-1">{pct.toFixed(1)}%</p>}
+    </div>
+  );
+};
+
+// Status Badge
+const Badge = ({ type, size = 'sm' }) => {
+  const styles = {
+    blocked: 'bg-red-500/20 text-red-400 border-red-500/30',
+    allowed: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+    critical: 'bg-red-500/20 text-red-400 border-red-500/30',
+    high: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+    medium: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+    low: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+    approved: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+    pending: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+    suspended: 'bg-red-500/20 text-red-400 border-red-500/30',
+    active: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+    inactive: 'bg-gray-500/20 text-gray-400 border-gray-500/30',
+    datacenter: 'bg-red-500/20 text-red-400 border-red-500/30',
+    vpn: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+    proxy: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+    tor: 'bg-red-500/20 text-red-400 border-red-500/30',
+    residential: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+  };
+  const labels = {
+    blocked: 'Engellendi', allowed: 'İzin', critical: 'Kritik', high: 'Yüksek', medium: 'Orta', low: 'Düşük',
+    approved: 'Onaylı', pending: 'Bekliyor', suspended: 'Askıda', active: 'Aktif', inactive: 'Pasif',
+    datacenter: 'Datacenter', vpn: 'VPN', proxy: 'Proxy', tor: 'TOR', residential: 'Residential',
+  };
+  const sizeClass = size === 'xs' ? 'px-1.5 py-0.5 text-[10px]' : 'px-2 py-0.5 text-xs';
+  return <span className={`${styles[type] || styles.low} border rounded font-medium ${sizeClass}`}>{labels[type] || type}</span>;
+};
+
+// Risk Score
+const RiskScore = ({ score }) => {
+  const color = score >= 70 ? 'text-red-400' : score >= 50 ? 'text-orange-400' : score >= 30 ? 'text-yellow-400' : 'text-emerald-400';
+  const bg = score >= 70 ? 'bg-red-500/20' : score >= 50 ? 'bg-orange-500/20' : score >= 30 ? 'bg-yellow-500/20' : 'bg-emerald-500/20';
+  return <span className={`${bg} ${color} px-2 py-0.5 rounded text-xs font-mono font-bold`}>{score}</span>;
+};
+
+// Device Icon
+const DeviceIcon = ({ type }) => {
+  if (type === 'mobile') return <Smartphone className="h-3.5 w-3.5 text-gray-500" />;
+  if (type === 'tablet') return <Tablet className="h-3.5 w-3.5 text-gray-500" />;
+  return <Laptop className="h-3.5 w-3.5 text-gray-500" />;
+};
+
+// Mini Chart
+const MiniBarChart = ({ data, height = 60 }) => {
+  const max = Math.max(...data.map(d => d.value), 1);
+  return (
+    <div className="flex items-end gap-0.5" style={{ height }}>
+      {data.map((d, i) => (
+        <div key={i} className="flex-1 flex flex-col items-center">
+          <div className="w-full rounded-t" style={{ height: `${(d.value / max) * 100}%`, backgroundColor: d.color || '#8b5cf6', minHeight: 2 }} />
         </div>
       ))}
     </div>
@@ -203,209 +306,101 @@ const BarChart = ({ data, labelKey, valueKey, color = '#8b5cf6', height = 200 })
 };
 
 // Donut Chart
-const DonutChart = ({ data, size = 160 }) => {
-  const total = data.reduce((sum, item) => sum + item.value, 0);
-  if (total === 0) return <div className="text-gray-600 text-center py-8">No data</div>;
-  
-  let currentAngle = -90;
-  const r = 40, cx = 50, cy = 50;
-  
+const DonutChart = ({ data, size = 100 }) => {
+  const total = data.reduce((s, d) => s + d.value, 0);
+  if (total === 0) return null;
+  let angle = -90;
   return (
-    <div className="flex items-center gap-6">
-      <svg viewBox="0 0 100 100" width={size} height={size}>
-        {data.map((item, idx) => {
-          if (item.value === 0) return null;
-          const pct = item.value / total;
-          const angle = pct * 360;
-          const start = currentAngle;
-          currentAngle += angle;
-          const startRad = (start * Math.PI) / 180;
-          const endRad = ((start + angle) * Math.PI) / 180;
-          const x1 = cx + r * Math.cos(startRad);
-          const y1 = cy + r * Math.sin(startRad);
-          const x2 = cx + r * Math.cos(endRad);
-          const y2 = cy + r * Math.sin(endRad);
-          const largeArc = angle > 180 ? 1 : 0;
-          return <path key={idx} d={`M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`} fill={item.color} className="hover:opacity-80 transition-opacity" />;
-        })}
-        <circle cx={cx} cy={cy} r="28" fill="#0f172a" />
-        <text x={cx} y={cy - 5} textAnchor="middle" fill="white" fontSize="14" fontWeight="bold">{total}</text>
-        <text x={cx} y={cy + 8} textAnchor="middle" fill="#64748b" fontSize="6">Total</text>
-      </svg>
-      <div className="space-y-2">
-        {data.map((item, i) => (
-          <div key={i} className="flex items-center gap-2 text-sm">
-            <div className="w-3 h-3 rounded" style={{ backgroundColor: item.color }} />
-            <span className="text-gray-400">{item.label}</span>
-            <span className="text-white font-medium">{item.value}</span>
-            <span className="text-gray-500">({((item.value / total) * 100).toFixed(1)}%)</span>
-          </div>
-        ))}
-      </div>
-    </div>
+    <svg viewBox="0 0 100 100" width={size} height={size}>
+      {data.map((d, i) => {
+        if (d.value === 0) return null;
+        const pct = d.value / total;
+        const a = pct * 360;
+        const start = angle;
+        angle += a;
+        const r = 40, cx = 50, cy = 50;
+        const rad1 = (start * Math.PI) / 180;
+        const rad2 = ((start + a) * Math.PI) / 180;
+        const x1 = cx + r * Math.cos(rad1), y1 = cy + r * Math.sin(rad1);
+        const x2 = cx + r * Math.cos(rad2), y2 = cy + r * Math.sin(rad2);
+        const large = a > 180 ? 1 : 0;
+        return <path key={i} d={`M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} Z`} fill={d.color} />;
+      })}
+      <circle cx="50" cy="50" r="25" fill="#0f172a" />
+    </svg>
   );
 };
 
-// Status Badge
-const StatusBadge = ({ status, size = 'sm' }) => {
-  const styles = {
-    blocked: { bg: 'bg-red-500/20', text: 'text-red-400', border: 'border-red-500/30', label: 'Blocked' },
-    allowed: { bg: 'bg-emerald-500/20', text: 'text-emerald-400', border: 'border-emerald-500/30', label: 'Allowed' },
-    critical: { bg: 'bg-red-500/20', text: 'text-red-400', border: 'border-red-500/30', label: 'Critical' },
-    high: { bg: 'bg-orange-500/20', text: 'text-orange-400', border: 'border-orange-500/30', label: 'High' },
-    medium: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', border: 'border-yellow-500/30', label: 'Medium' },
-    low: { bg: 'bg-emerald-500/20', text: 'text-emerald-400', border: 'border-emerald-500/30', label: 'Low' },
-    approved: { bg: 'bg-emerald-500/20', text: 'text-emerald-400', border: 'border-emerald-500/30', label: 'Approved' },
-    pending: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', border: 'border-yellow-500/30', label: 'Pending' },
-    active: { bg: 'bg-emerald-500/20', text: 'text-emerald-400', border: 'border-emerald-500/30', label: 'Active' },
-    inactive: { bg: 'bg-gray-500/20', text: 'text-gray-400', border: 'border-gray-500/30', label: 'Inactive' },
-  };
-  const s = styles[status] || styles.low;
-  const sizeClass = size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-sm';
-  
-  return (
-    <span className={`${s.bg} ${s.text} ${s.border} border rounded ${sizeClass} font-medium`}>
-      {s.label}
-    </span>
-  );
-};
-
-// Risk Score Badge
-const RiskScoreBadge = ({ score }) => {
-  const getColor = () => {
-    if (score >= 70) return { bg: 'bg-red-500/20', text: 'text-red-400', border: 'border-red-500/30' };
-    if (score >= 50) return { bg: 'bg-orange-500/20', text: 'text-orange-400', border: 'border-orange-500/30' };
-    if (score >= 30) return { bg: 'bg-yellow-500/20', text: 'text-yellow-400', border: 'border-yellow-500/30' };
-    return { bg: 'bg-emerald-500/20', text: 'text-emerald-400', border: 'border-emerald-500/30' };
-  };
-  const c = getColor();
-  return (
-    <span className={`${c.bg} ${c.text} ${c.border} border rounded px-2 py-0.5 text-xs font-mono font-bold`}>
-      {score}
-    </span>
-  );
-};
-
-// Device Icon
-const DeviceIcon = ({ type }) => {
-  if (type === 'mobile') return <Smartphone className="h-4 w-4 text-gray-400" />;
-  if (type === 'tablet') return <Tablet className="h-4 w-4 text-gray-400" />;
-  return <Laptop className="h-4 w-4 text-gray-400" />;
-};
-
-// Advanced Data Table
-const DataTable = ({ 
-  columns, 
-  data, 
-  title, 
-  onExport,
-  pagination = true,
-  pageSize = 20,
-  filters,
-  onFilterChange 
-}) => {
+// Data Table
+const DataTable = ({ columns, data, title, filters, onExport, pageSize = 25, compact = false }) => {
   const [sortKey, setSortKey] = useState(null);
   const [sortDir, setSortDir] = useState('desc');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   
-  const handleSort = (key) => {
-    if (sortKey === key) {
-      setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortKey(key);
-      setSortDir('desc');
-    }
-  };
-  
   const filtered = useMemo(() => {
-    let result = [...data];
-    if (search) {
-      result = result.filter(row => 
-        Object.values(row).some(val => 
-          String(val).toLowerCase().includes(search.toLowerCase())
-        )
-      );
-    }
-    return result;
+    if (!search) return data;
+    return data.filter(r => Object.values(r).some(v => String(v).toLowerCase().includes(search.toLowerCase())));
   }, [data, search]);
   
   const sorted = useMemo(() => {
     if (!sortKey) return filtered;
     return [...filtered].sort((a, b) => {
-      const aVal = a[sortKey];
-      const bVal = b[sortKey];
-      const mod = sortDir === 'asc' ? 1 : -1;
-      if (typeof aVal === 'number') return (aVal - bVal) * mod;
-      return String(aVal).localeCompare(String(bVal)) * mod;
+      const av = a[sortKey], bv = b[sortKey];
+      const m = sortDir === 'asc' ? 1 : -1;
+      return typeof av === 'number' ? (av - bv) * m : String(av).localeCompare(String(bv)) * m;
     });
   }, [filtered, sortKey, sortDir]);
   
   const totalPages = Math.ceil(sorted.length / pageSize);
-  const paginatedData = pagination ? sorted.slice((currentPage - 1) * pageSize, currentPage * pageSize) : sorted;
+  const pageData = sorted.slice((page - 1) * pageSize, page * pageSize);
+  
+  const cellClass = compact ? 'px-2 py-1.5 text-xs' : 'px-3 py-2 text-sm';
+  const headerClass = compact ? 'px-2 py-2 text-[10px]' : 'px-3 py-2 text-xs';
   
   return (
-    <div className="bg-slate-900/50 border border-slate-700/50 rounded-xl overflow-hidden">
-      {/* Header */}
-      <div className="p-4 border-b border-slate-700/50 flex items-center justify-between flex-wrap gap-4">
-        <div className="flex items-center gap-4">
-          <h3 className="font-semibold text-white">{title}</h3>
-          <span className="text-sm text-gray-500">{formatNumber(sorted.length)} records</span>
-        </div>
+    <div className="bg-slate-900/50 border border-slate-700/50 rounded-lg overflow-hidden">
+      <div className="p-3 border-b border-slate-700/50 flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-3">
+          <h3 className="font-semibold text-white text-sm">{title}</h3>
+          <span className="text-xs text-gray-500 bg-slate-800 px-2 py-0.5 rounded">{formatNumber(sorted.length)} kayıt</span>
+        </div>
+        <div className="flex items-center gap-2">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-            <input
-              type="text"
-              placeholder="Search..."
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-              className="pl-9 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white w-64 focus:border-purple-500 outline-none"
-            />
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-500" />
+            <input type="text" placeholder="Ara..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              className="pl-7 pr-3 py-1.5 bg-slate-800 border border-slate-700 rounded text-xs text-white w-44 focus:border-purple-500 outline-none" />
           </div>
           {onExport && (
-            <button onClick={onExport} className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-sm font-medium text-white">
-              <Download className="h-4 w-4" /> Export
+            <button onClick={onExport} className="flex items-center gap-1 px-2.5 py-1.5 bg-purple-600 hover:bg-purple-500 rounded text-xs font-medium">
+              <Download className="h-3 w-3" /> Export
             </button>
           )}
         </div>
       </div>
       
-      {/* Filters */}
-      {filters && (
-        <div className="p-4 border-b border-slate-700/50 flex items-center gap-4 flex-wrap bg-slate-800/30">
-          <Filter className="h-4 w-4 text-gray-500" />
-          {filters}
-        </div>
-      )}
+      {filters && <div className="p-2 border-b border-slate-700/50 flex items-center gap-2 flex-wrap bg-slate-800/30">{filters}</div>}
       
-      {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead className="bg-slate-800/50">
             <tr>
-              {columns.map((col) => (
-                <th
-                  key={col.key}
-                  onClick={() => col.sortable !== false && handleSort(col.key)}
-                  className={`px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider whitespace-nowrap ${col.sortable !== false ? 'cursor-pointer hover:text-gray-200' : ''}`}
-                  style={{ width: col.width }}
-                >
+              {columns.map(col => (
+                <th key={col.key} onClick={() => col.sortable !== false && (setSortKey(col.key), setSortDir(sortKey === col.key && sortDir === 'desc' ? 'asc' : 'desc'))}
+                  className={`${headerClass} text-left font-medium text-gray-400 uppercase tracking-wider whitespace-nowrap ${col.sortable !== false ? 'cursor-pointer hover:text-gray-200' : ''}`} style={{ width: col.width }}>
                   <div className="flex items-center gap-1">
                     {col.label}
-                    {col.sortable !== false && sortKey === col.key && (
-                      sortDir === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />
-                    )}
+                    {sortKey === col.key && (sortDir === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
                   </div>
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-700/50">
-            {paginatedData.map((row, rowIdx) => (
-              <tr key={row.id || rowIdx} className="hover:bg-slate-800/30 transition-colors">
-                {columns.map((col) => (
-                  <td key={col.key} className="px-4 py-3 text-sm whitespace-nowrap">
+          <tbody className="divide-y divide-slate-700/30">
+            {pageData.map((row, i) => (
+              <tr key={row.id || i} className="hover:bg-slate-800/30">
+                {columns.map(col => (
+                  <td key={col.key} className={`${cellClass} whitespace-nowrap`}>
                     {col.render ? col.render(row[col.key], row) : row[col.key]}
                   </td>
                 ))}
@@ -415,52 +410,17 @@ const DataTable = ({
         </table>
       </div>
       
-      {paginatedData.length === 0 && (
-        <div className="p-8 text-center text-gray-500">No data found</div>
-      )}
+      {pageData.length === 0 && <div className="p-6 text-center text-gray-500 text-sm">Veri bulunamadı</div>}
       
-      {/* Pagination */}
-      {pagination && totalPages > 1 && (
-        <div className="p-4 border-t border-slate-700/50 flex items-center justify-between">
-          <span className="text-sm text-gray-500">
-            Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, sorted.length)} of {sorted.length}
-          </span>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-              let pageNum;
-              if (totalPages <= 5) {
-                pageNum = i + 1;
-              } else if (currentPage <= 3) {
-                pageNum = i + 1;
-              } else if (currentPage >= totalPages - 2) {
-                pageNum = totalPages - 4 + i;
-              } else {
-                pageNum = currentPage - 2 + i;
-              }
-              return (
-                <button
-                  key={pageNum}
-                  onClick={() => setCurrentPage(pageNum)}
-                  className={`px-3 py-1 rounded-lg text-sm ${currentPage === pageNum ? 'bg-purple-600 text-white' : 'bg-slate-800 hover:bg-slate-700 text-gray-300'}`}
-                >
-                  {pageNum}
-                </button>
-              );
-            })}
-            <button
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-              className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
+      {totalPages > 1 && (
+        <div className="p-2 border-t border-slate-700/50 flex items-center justify-between text-xs">
+          <span className="text-gray-500">{(page - 1) * pageSize + 1}-{Math.min(page * pageSize, sorted.length)} / {sorted.length}</span>
+          <div className="flex items-center gap-1">
+            <button onClick={() => setPage(1)} disabled={page === 1} className="px-2 py-1 bg-slate-800 rounded disabled:opacity-50">«</button>
+            <button onClick={() => setPage(p => p - 1)} disabled={page === 1} className="px-2 py-1 bg-slate-800 rounded disabled:opacity-50">‹</button>
+            <span className="px-3 text-gray-400">{page}/{totalPages}</span>
+            <button onClick={() => setPage(p => p + 1)} disabled={page === totalPages} className="px-2 py-1 bg-slate-800 rounded disabled:opacity-50">›</button>
+            <button onClick={() => setPage(totalPages)} disabled={page === totalPages} className="px-2 py-1 bg-slate-800 rounded disabled:opacity-50">»</button>
           </div>
         </div>
       )}
@@ -468,23 +428,16 @@ const DataTable = ({
   );
 };
 
-// Select Component
+// Select
 const Select = ({ options, value, onChange, placeholder, className = '' }) => (
-  <select
-    value={value}
-    onChange={(e) => onChange(e.target.value)}
-    className={`px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:border-purple-500 outline-none ${className}`}
-  >
+  <select value={value} onChange={e => onChange(e.target.value)}
+    className={`px-2 py-1.5 bg-slate-800 border border-slate-700 rounded text-xs text-white focus:border-purple-500 outline-none ${className}`}>
     <option value="">{placeholder}</option>
-    {options.map((opt) => (
-      <option key={opt.value} value={opt.value}>{opt.label}</option>
-    ))}
+    {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
   </select>
 );
 
-// ==================== PAGES ====================
-
-// Login Page
+// ==================== LOGIN ====================
 const LoginPage = ({ onSuccess }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -494,60 +447,34 @@ const LoginPage = ({ onSuccess }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
     try {
       const res = await axios.post(`${API}/auth/login`, { email, password });
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('user', JSON.stringify(res.data.user));
       onSuccess(res.data.user);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Login failed');
-    } finally {
-      setLoading(false);
-    }
+      setError(err.response?.data?.detail || 'Giriş başarısız');
+    } finally { setLoading(false); }
   };
   
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <Shield className="h-10 w-10 text-purple-500" />
-            <span className="text-2xl font-bold text-white">AdsKalkan</span>
-          </div>
-          <p className="text-gray-400">Admin Dashboard</p>
+      <div className="w-full max-w-sm">
+        <div className="text-center mb-6">
+          <Shield className="h-10 w-10 text-purple-500 mx-auto mb-2" />
+          <h1 className="text-xl font-bold text-white">AdsKalkan</h1>
+          <p className="text-sm text-gray-500">Yönetim Paneli</p>
         </div>
-        
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-          <h2 className="text-xl font-semibold text-white mb-6">Sign In</h2>
-          {error && <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg mb-4 text-sm">{error}</div>}
+        <div className="bg-slate-900 border border-slate-800 rounded-lg p-5">
+          {error && <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-3 py-2 rounded text-sm mb-4">{error}</div>}
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm text-gray-400 mb-2">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white focus:border-purple-500 outline-none"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm text-gray-400 mb-2">Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white focus:border-purple-500 outline-none"
-                required
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 rounded-lg font-medium text-white disabled:opacity-50"
-            >
-              {loading ? 'Signing in...' : 'Sign In'}
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email"
+              className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded text-white text-sm" required />
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Şifre"
+              className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded text-white text-sm" required />
+            <button type="submit" disabled={loading}
+              className="w-full py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 rounded font-medium text-white text-sm disabled:opacity-50">
+              {loading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
             </button>
           </form>
         </div>
@@ -556,57 +483,46 @@ const LoginPage = ({ onSuccess }) => {
   );
 };
 
-// Main Admin Dashboard
+// ==================== MAIN DASHBOARD ====================
 const AdminDashboard = ({ user, onLogout }) => {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [tab, setTab] = useState('dashboard');
   const [dateRange, setDateRange] = useState('7d');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const [filters, setFilters] = useState({ site: '', city: '', device: '', risk: '', status: '', ipType: '' });
   
-  // Filter states
-  const [visitorFilters, setVisitorFilters] = useState({
-    site: '',
-    city: '',
-    device: '',
-    riskLevel: '',
-    status: '',
-  });
+  const isSuperAdmin = user?.role === 'super_admin';
   
-  const isSuperAdmin = user?.role === 'super_admin' || user?.role === 'admin_helper';
-  
-  // Calculate stats
+  // Stats
   const stats = useMemo(() => {
-    const totalVisitors = MOCK_VISITORS.length;
-    const blockedVisitors = MOCK_VISITORS.filter(v => v.is_blocked).length;
-    const protectionRate = ((blockedVisitors / totalVisitors) * 100).toFixed(1);
-    const activeSites = MOCK_SITES.filter(s => s.is_active).length;
-    const activePools = MOCK_POOLS.filter(p => p.is_active).length;
+    const total = MOCK_VISITORS.length;
+    const blocked = MOCK_VISITORS.filter(v => v.is_blocked).length;
+    const uniqueIPs = new Set(MOCK_VISITORS.map(v => v.ip_address)).size;
     const blockedIPs = new Set(MOCK_VISITORS.filter(v => v.is_blocked).map(v => v.ip_address)).size;
-    
-    return { totalVisitors, blockedVisitors, protectionRate, activeSites, activePools, blockedIPs };
+    const avgRisk = (MOCK_VISITORS.reduce((s, v) => s + v.risk_score, 0) / total).toFixed(1);
+    const savings = blocked * 2.5;
+    const critical = MOCK_VISITORS.filter(v => v.risk_level === 'critical').length;
+    const high = MOCK_VISITORS.filter(v => v.risk_level === 'high').length;
+    const medium = MOCK_VISITORS.filter(v => v.risk_level === 'medium').length;
+    const low = MOCK_VISITORS.filter(v => v.risk_level === 'low').length;
+    const datacenter = MOCK_VISITORS.filter(v => v.ip_type === 'datacenter').length;
+    const vpn = MOCK_VISITORS.filter(v => v.ip_type === 'vpn' || v.ip_type === 'proxy').length;
+    const poolThreats = MOCK_POOLS.reduce((s, p) => s + p.shared_threats, 0);
+    return { total, blocked, allowed: total - blocked, rate: ((blocked / total) * 100).toFixed(1), uniqueIPs, blockedIPs, avgRisk, savings, critical, high, medium, low, datacenter, vpn, poolThreats };
   }, []);
   
-  // Risk distribution
-  const riskDistribution = useMemo(() => {
-    const counts = { low: 0, medium: 0, high: 0, critical: 0 };
-    MOCK_VISITORS.forEach(v => counts[v.risk_level]++);
-    return [
-      { label: 'Low', value: counts.low, color: '#22c55e' },
-      { label: 'Medium', value: counts.medium, color: '#eab308' },
-      { label: 'High', value: counts.high, color: '#f97316' },
-      { label: 'Critical', value: counts.critical, color: '#ef4444' },
-    ];
-  }, []);
+  // Risk distribution for chart
+  const riskDist = [
+    { label: 'Düşük', value: stats.low, color: '#22c55e' },
+    { label: 'Orta', value: stats.medium, color: '#eab308' },
+    { label: 'Yüksek', value: stats.high, color: '#f97316' },
+    { label: 'Kritik', value: stats.critical, color: '#ef4444' },
+  ];
   
   // City stats
   const cityStats = useMemo(() => {
     const counts = {};
-    MOCK_VISITORS.filter(v => v.is_blocked).forEach(v => {
-      counts[v.city] = (counts[v.city] || 0) + 1;
-    });
-    return Object.entries(counts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 6)
-      .map(([city, count]) => ({ city, count }));
+    MOCK_VISITORS.filter(v => v.is_blocked).forEach(v => counts[v.city] = (counts[v.city] || 0) + 1);
+    return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([city, count]) => ({ city, count }));
   }, []);
   
   // Device stats
@@ -614,434 +530,411 @@ const AdminDashboard = ({ user, onLogout }) => {
     const counts = { desktop: 0, mobile: 0, tablet: 0 };
     MOCK_VISITORS.forEach(v => counts[v.device_type]++);
     return [
-      { device: 'Desktop', count: counts.desktop },
-      { device: 'Mobile', count: counts.mobile },
-      { device: 'Tablet', count: counts.tablet },
+      { label: 'Desktop', value: counts.desktop, color: '#3b82f6' },
+      { label: 'Mobile', value: counts.mobile, color: '#8b5cf6' },
+      { label: 'Tablet', value: counts.tablet, color: '#06b6d4' },
     ];
   }, []);
+  
+  // IP Type stats
+  const ipTypeStats = useMemo(() => {
+    const counts = {};
+    MOCK_VISITORS.forEach(v => counts[v.ip_type] = (counts[v.ip_type] || 0) + 1);
+    return [
+      { label: 'Residential', value: counts.residential || 0, color: '#22c55e' },
+      { label: 'Datacenter', value: counts.datacenter || 0, color: '#ef4444' },
+      { label: 'VPN', value: counts.vpn || 0, color: '#f97316' },
+      { label: 'Proxy', value: counts.proxy || 0, color: '#eab308' },
+      { label: 'TOR', value: counts.tor || 0, color: '#dc2626' },
+    ];
+  }, []);
+  
+  // Hourly chart data
+  const hourlyChartData = HOURLY_STATS.map(h => ({ value: h.blocked, color: '#8b5cf6' }));
   
   // Filtered visitors
   const filteredVisitors = useMemo(() => {
     return MOCK_VISITORS.filter(v => {
-      if (visitorFilters.site && v.site_id !== visitorFilters.site) return false;
-      if (visitorFilters.city && v.city !== visitorFilters.city) return false;
-      if (visitorFilters.device && v.device_type !== visitorFilters.device) return false;
-      if (visitorFilters.riskLevel && v.risk_level !== visitorFilters.riskLevel) return false;
-      if (visitorFilters.status === 'blocked' && !v.is_blocked) return false;
-      if (visitorFilters.status === 'allowed' && v.is_blocked) return false;
+      if (filters.site && v.site_id !== filters.site) return false;
+      if (filters.city && v.city !== filters.city) return false;
+      if (filters.device && v.device_type !== filters.device) return false;
+      if (filters.risk && v.risk_level !== filters.risk) return false;
+      if (filters.status === 'blocked' && !v.is_blocked) return false;
+      if (filters.status === 'allowed' && v.is_blocked) return false;
+      if (filters.ipType && v.ip_type !== filters.ipType) return false;
       return true;
     });
-  }, [visitorFilters]);
+  }, [filters]);
   
-  const handleExport = () => {
-    alert('Export functionality - CSV/Excel download would be triggered here');
-  };
-  
-  // Visitor table columns
-  const visitorColumns = [
-    { key: 'created_at', label: 'Date & Time', sortable: true, width: '140px', render: (v) => <span className="text-gray-400 text-xs">{formatDate(v)}</span> },
-    { key: 'site_name', label: 'Site', sortable: true, render: (v) => <span className="text-purple-400 font-medium">{v}</span> },
-    { key: 'domain', label: 'Domain', sortable: true, render: (v) => <span className="text-gray-400">{v}</span> },
-    { key: 'ip_address', label: 'IP Address', sortable: true, render: (v) => <span className="font-mono text-white">{v}</span> },
-    { key: 'city', label: 'City', sortable: true, render: (v, r) => <span className="text-gray-400">{v}, {r.country}</span> },
-    { key: 'device_type', label: 'Device', sortable: true, render: (v) => <div className="flex items-center gap-2"><DeviceIcon type={v} /><span className="text-gray-400 capitalize">{v}</span></div> },
-    { key: 'browser', label: 'Browser', sortable: true, render: (v, r) => <span className="text-gray-400">{v} / {r.os}</span> },
-    { key: 'time_on_page', label: 'Time', sortable: true, render: (v) => <span className="text-gray-400">{v}s</span> },
-    { key: 'risk_score', label: 'Risk Score', sortable: true, render: (v) => <RiskScoreBadge score={v} /> },
-    { key: 'risk_level', label: 'Risk Level', sortable: true, render: (v) => <StatusBadge status={v} /> },
-    { key: 'is_blocked', label: 'Status', sortable: true, render: (v) => <StatusBadge status={v ? 'blocked' : 'allowed'} /> },
+  // Table columns
+  const visitorCols = [
+    { key: 'created_at', label: 'Tarih', width: '130px', render: v => <span className="text-gray-400 text-[11px]">{formatDate(v)}</span> },
+    { key: 'site_name', label: 'Site', render: v => <span className="text-purple-400 font-medium text-xs">{v}</span> },
+    { key: 'ip_address', label: 'IP Adresi', render: v => <span className="font-mono text-white text-xs">{v}</span> },
+    { key: 'ip_type', label: 'IP Tipi', render: v => <Badge type={v} size="xs" /> },
+    { key: 'city', label: 'Şehir', render: (v, r) => <span className="text-gray-400 text-xs">{v}</span> },
+    { key: 'device_type', label: 'Cihaz', render: v => <div className="flex items-center gap-1"><DeviceIcon type={v} /><span className="text-gray-400 text-xs capitalize">{v}</span></div> },
+    { key: 'browser', label: 'Tarayıcı', render: (v, r) => <span className="text-gray-400 text-xs">{v}</span> },
+    { key: 'os', label: 'OS', render: v => <span className="text-gray-400 text-xs">{v}</span> },
+    { key: 'time_on_page', label: 'Süre', render: v => <span className="text-gray-400 text-xs">{v}s</span> },
+    { key: 'mouse_movements', label: 'Mouse', render: v => <span className={`text-xs ${v < 10 ? 'text-red-400' : 'text-gray-400'}`}>{v}</span> },
+    { key: 'risk_score', label: 'Risk', render: v => <RiskScore score={v} /> },
+    { key: 'risk_level', label: 'Seviye', render: v => <Badge type={v} size="xs" /> },
+    { key: 'is_blocked', label: 'Durum', render: v => <Badge type={v ? 'blocked' : 'allowed'} size="xs" /> },
   ];
   
-  // Site table columns
-  const siteColumns = [
-    { key: 'name', label: 'Site Name', sortable: true, render: (v) => <span className="text-white font-medium">{v}</span> },
-    { key: 'domain', label: 'Domain', sortable: true, render: (v) => <span className="text-purple-400">{v}</span> },
-    { key: 'pool', label: 'Pool', sortable: true, render: (v) => <span className="text-gray-400">{v}</span> },
-    { key: 'total_visitors', label: 'Total Visitors', sortable: true, render: (v) => <span className="text-white">{formatNumber(v)}</span> },
-    { key: 'blocked_visitors', label: 'Blocked', sortable: true, render: (v) => <span className="text-red-400">{formatNumber(v)}</span> },
-    { key: 'protection_rate', label: 'Protection %', sortable: true, render: (v) => <span className={`font-medium ${v > 25 ? 'text-red-400' : v > 15 ? 'text-orange-400' : 'text-emerald-400'}`}>{v}%</span> },
-    { key: 'last_activity', label: 'Last Activity', sortable: true, render: (v) => <span className="text-gray-500 text-xs">{formatDateShort(v)}</span> },
-    { key: 'is_active', label: 'Status', sortable: true, render: (v) => <StatusBadge status={v ? 'active' : 'inactive'} /> },
+  const siteCols = [
+    { key: 'name', label: 'Site Adı', render: v => <span className="text-white font-medium text-xs">{v}</span> },
+    { key: 'domain', label: 'Domain', render: v => <span className="text-purple-400 text-xs">{v}</span> },
+    { key: 'pool', label: 'Havuz', render: v => <span className="text-gray-400 text-xs">{v}</span> },
+    { key: 'total_visitors', label: 'Toplam', render: v => <span className="text-white text-xs">{formatNumber(v)}</span> },
+    { key: 'blocked_visitors', label: 'Engellenen', render: v => <span className="text-red-400 text-xs">{formatNumber(v)}</span> },
+    { key: 'allowed_visitors', label: 'İzin', render: v => <span className="text-emerald-400 text-xs">{formatNumber(v)}</span> },
+    { key: 'protection_rate', label: 'Koruma %', render: v => <span className={`text-xs font-medium ${parseFloat(v) > 25 ? 'text-red-400' : 'text-emerald-400'}`}>{v}%</span> },
+    { key: 'avg_risk_score', label: 'Ort. Risk', render: v => <span className="text-gray-400 text-xs">{v}</span> },
+    { key: 'is_active', label: 'Durum', render: v => <Badge type={v ? 'active' : 'inactive'} size="xs" /> },
   ];
   
-  // Pool table columns
-  const poolColumns = [
-    { key: 'name', label: 'Pool Name', sortable: true, render: (v) => <span className="text-white font-medium">{v}</span> },
-    { key: 'sector', label: 'Sector', sortable: true, render: (v) => <span className="text-purple-400">{v}</span> },
-    { key: 'city', label: 'City', sortable: true, render: (v) => <span className="text-gray-400">{v}</span> },
-    { key: 'sites_count', label: 'Sites', sortable: true, render: (v) => <span className="text-white">{v}</span> },
-    { key: 'blocked_ips', label: 'Blocked IPs', sortable: true, render: (v) => <span className="text-orange-400">{formatNumber(v)}</span> },
-    { key: 'blocked_clicks', label: 'Blocked Clicks', sortable: true, render: (v) => <span className="text-red-400">{formatNumber(v)}</span> },
-    { key: 'is_active', label: 'Status', sortable: true, render: (v) => <StatusBadge status={v ? 'active' : 'inactive'} /> },
+  const poolCols = [
+    { key: 'name', label: 'Havuz Adı', render: v => <span className="text-white font-medium text-xs">{v}</span> },
+    { key: 'sector', label: 'Sektör', render: v => <span className="text-purple-400 text-xs">{v}</span> },
+    { key: 'city', label: 'Şehir', render: v => <span className="text-gray-400 text-xs">{v}</span> },
+    { key: 'sites_count', label: 'Site', render: v => <span className="text-white text-xs">{v}</span> },
+    { key: 'blocked_ips', label: 'Engelli IP', render: v => <span className="text-orange-400 text-xs">{formatNumber(v)}</span> },
+    { key: 'blocked_clicks', label: 'Engelli Tık', render: v => <span className="text-red-400 text-xs">{formatNumber(v)}</span> },
+    { key: 'shared_threats', label: 'Paylaşılan', render: v => <span className="text-cyan-400 text-xs">{formatNumber(v)}</span> },
+    { key: 'is_active', label: 'Durum', render: v => <Badge type={v ? 'active' : 'inactive'} size="xs" /> },
   ];
   
-  // User table columns
-  const userColumns = [
-    { key: 'full_name', label: 'Name', sortable: true, render: (v, r) => <div><span className="text-white font-medium">{v}</span><br/><span className="text-gray-500 text-xs">{r.email}</span></div> },
-    { key: 'company', label: 'Company', sortable: true, render: (v) => <span className="text-gray-400">{v}</span> },
-    { key: 'role', label: 'Role', sortable: true, render: (v) => <span className={`px-2 py-1 rounded text-xs ${v === 'super_admin' ? 'bg-purple-500/20 text-purple-400' : 'bg-blue-500/20 text-blue-400'}`}>{v === 'super_admin' ? 'Super Admin' : 'Customer'}</span> },
-    { key: 'sites_count', label: 'Sites', sortable: true, render: (v) => <span className="text-white">{v}</span> },
-    { key: 'status', label: 'Status', sortable: true, render: (v) => <StatusBadge status={v} /> },
-    { key: 'created_at', label: 'Joined', sortable: true, render: (v) => <span className="text-gray-500 text-xs">{formatDateShort(v)}</span> },
+  const blockedIPCols = [
+    { key: 'ip_address', label: 'IP Adresi', render: v => <span className="font-mono text-white text-xs">{v}</span> },
+    { key: 'ip_type', label: 'IP Tipi', render: v => <Badge type={v} size="xs" /> },
+    { key: 'isp', label: 'ISP', render: v => <span className="text-gray-400 text-xs">{v}</span> },
+    { key: 'city', label: 'Şehir', render: v => <span className="text-gray-400 text-xs">{v}</span> },
+    { key: 'total_visits', label: 'Ziyaret', render: v => <span className="text-white text-xs">{v}</span> },
+    { key: 'blocked_count', label: 'Engel', render: v => <span className="text-red-400 text-xs">{v}</span> },
+    { key: 'risk_score', label: 'Risk', render: v => <RiskScore score={v} /> },
+    { key: 'blocked_reason', label: 'Sebep', render: v => <span className="text-gray-400 text-xs truncate max-w-[150px] block">{v}</span> },
+    { key: 'affected_sites', label: 'Etkilenen', render: v => <span className="text-orange-400 text-xs">{v} site</span> },
+    { key: 'is_global', label: 'Global', render: v => v ? <Badge type="active" size="xs" /> : <Badge type="inactive" size="xs" /> },
+    { key: 'last_seen', label: 'Son Görülme', render: v => <span className="text-gray-500 text-[11px]">{formatDateShort(v)}</span> },
   ];
   
-  const menuItems = [
+  const userCols = [
+    { key: 'full_name', label: 'Ad Soyad', render: (v, r) => <div><span className="text-white text-xs font-medium">{v}</span><br/><span className="text-gray-500 text-[10px]">{r.email}</span></div> },
+    { key: 'company', label: 'Şirket', render: v => <span className="text-gray-400 text-xs">{v}</span> },
+    { key: 'phone', label: 'Telefon', render: v => <span className="text-gray-400 text-xs">{v}</span> },
+    { key: 'role', label: 'Rol', render: v => <span className={`px-2 py-0.5 rounded text-[10px] ${v === 'super_admin' ? 'bg-purple-500/20 text-purple-400' : 'bg-blue-500/20 text-blue-400'}`}>{v === 'super_admin' ? 'Süper Admin' : 'Müşteri'}</span> },
+    { key: 'package', label: 'Paket', render: v => <span className="text-cyan-400 text-xs">{v}</span> },
+    { key: 'sites_count', label: 'Site', render: v => <span className="text-white text-xs">{v}</span> },
+    { key: 'monthly_visitors', label: 'Aylık Ziyaret', render: v => <span className="text-gray-400 text-xs">{formatNumber(v)}</span> },
+    { key: 'status', label: 'Durum', render: v => <Badge type={v} size="xs" /> },
+    { key: 'last_login', label: 'Son Giriş', render: v => <span className="text-gray-500 text-[10px]">{v ? formatDateShort(v) : '-'}</span> },
+  ];
+  
+  const menu = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
-    { id: 'sites', label: 'Sites', icon: Globe },
-    { id: 'pools', label: 'Pools', icon: Layers },
-    { id: 'visitors', label: 'Visitors', icon: Eye },
-    { id: 'blocked', label: 'Blocked IPs', icon: Ban },
-    { id: 'reports', label: 'Reports', icon: FileText },
-    { id: 'settings', label: 'Settings', icon: Settings },
+    { id: 'sites', label: 'Siteler', icon: Globe },
+    { id: 'pools', label: 'Havuzlar', icon: Layers },
+    { id: 'visitors', label: 'Ziyaretçiler', icon: Eye },
+    { id: 'blocked', label: 'Engelli IPler', icon: Ban },
+    { id: 'analytics', label: 'Analitik', icon: BarChart3 },
+    { id: 'reports', label: 'Raporlar', icon: FileText },
+    { id: 'settings', label: 'Ayarlar', icon: Settings },
   ];
   
-  const superAdminMenuItems = [
-    { id: 'users', label: 'Users', icon: Users },
-    { id: 'packages', label: 'Packages', icon: Package },
-    { id: 'campaigns', label: 'Campaigns', icon: Megaphone },
-    { id: 'system', label: 'System Logs', icon: Server },
+  const superMenu = [
+    { id: 'users', label: 'Kullanıcılar', icon: Users },
+    { id: 'packages', label: 'Paketler', icon: Package },
+    { id: 'campaigns', label: 'Kampanyalar', icon: Megaphone },
+    { id: 'system', label: 'Sistem Logları', icon: Server },
   ];
   
   return (
     <div className="min-h-screen bg-slate-950 text-white flex">
       {/* Sidebar */}
-      <aside className={`${sidebarCollapsed ? 'w-16' : 'w-60'} bg-slate-900 border-r border-slate-800 flex flex-col transition-all duration-300 flex-shrink-0`}>
-        {/* Logo */}
-        <div className="p-4 border-b border-slate-800 flex items-center gap-3">
-          <Shield className="h-8 w-8 text-purple-500 flex-shrink-0" />
-          {!sidebarCollapsed && <span className="text-lg font-bold">AdsKalkan</span>}
+      <aside className={`${collapsed ? 'w-14' : 'w-48'} bg-slate-900 border-r border-slate-800 flex flex-col transition-all flex-shrink-0`}>
+        <div className="p-3 border-b border-slate-800 flex items-center gap-2">
+          <Shield className="h-6 w-6 text-purple-500 flex-shrink-0" />
+          {!collapsed && <span className="font-bold text-sm">AdsKalkan</span>}
         </div>
-        
-        {/* Navigation */}
-        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-          {menuItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
-                activeTab === item.id
-                  ? 'bg-gradient-to-r from-purple-600/20 to-blue-600/20 text-white border border-purple-500/30'
-                  : 'text-gray-400 hover:bg-slate-800 hover:text-white'
-              }`}
-            >
-              <item.icon className="h-5 w-5 flex-shrink-0" />
-              {!sidebarCollapsed && <span className="text-sm">{item.label}</span>}
+        <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto">
+          {menu.map(m => (
+            <button key={m.id} onClick={() => setTab(m.id)}
+              className={`w-full flex items-center gap-2 px-2.5 py-2 rounded text-xs transition-all ${tab === m.id ? 'bg-purple-600/20 text-purple-400 border border-purple-500/30' : 'text-gray-400 hover:bg-slate-800 hover:text-white border border-transparent'}`}>
+              <m.icon className="h-4 w-4 flex-shrink-0" />
+              {!collapsed && <span>{m.label}</span>}
             </button>
           ))}
-          
           {isSuperAdmin && (
             <>
-              <div className="pt-4 pb-2">
-                {!sidebarCollapsed && <span className="text-xs text-gray-500 uppercase tracking-wider px-3">Super Admin</span>}
-              </div>
-              {superAdminMenuItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
-                    activeTab === item.id
-                      ? 'bg-gradient-to-r from-purple-600/20 to-blue-600/20 text-white border border-purple-500/30'
-                      : 'text-gray-400 hover:bg-slate-800 hover:text-white'
-                  }`}
-                >
-                  <item.icon className="h-5 w-5 flex-shrink-0" />
-                  {!sidebarCollapsed && <span className="text-sm">{item.label}</span>}
+              <div className="pt-3 pb-1">{!collapsed && <span className="text-[10px] text-gray-600 uppercase px-2">Süper Admin</span>}</div>
+              {superMenu.map(m => (
+                <button key={m.id} onClick={() => setTab(m.id)}
+                  className={`w-full flex items-center gap-2 px-2.5 py-2 rounded text-xs transition-all ${tab === m.id ? 'bg-purple-600/20 text-purple-400 border border-purple-500/30' : 'text-gray-400 hover:bg-slate-800 hover:text-white border border-transparent'}`}>
+                  <m.icon className="h-4 w-4 flex-shrink-0" />
+                  {!collapsed && <span>{m.label}</span>}
                 </button>
               ))}
             </>
           )}
         </nav>
-        
-        {/* Collapse Button */}
-        <div className="p-3 border-t border-slate-800">
-          <button
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="w-full flex items-center justify-center p-2 text-gray-400 hover:text-white rounded-lg hover:bg-slate-800"
-          >
-            {sidebarCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
+        <div className="p-2 border-t border-slate-800">
+          <button onClick={() => setCollapsed(!collapsed)} className="w-full flex items-center justify-center p-2 text-gray-500 hover:text-white rounded hover:bg-slate-800">
+            {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
           </button>
         </div>
       </aside>
       
-      {/* Main Content */}
+      {/* Main */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Header */}
-        <header className="bg-slate-900/80 backdrop-blur-xl border-b border-slate-800 px-6 py-3 flex items-center justify-between flex-shrink-0">
-          <div className="flex items-center gap-4">
-            <h1 className="text-lg font-semibold">{menuItems.find(m => m.id === activeTab)?.label || superAdminMenuItems.find(m => m.id === activeTab)?.label || 'Dashboard'}</h1>
-            <span className={`px-2 py-1 rounded text-xs font-medium ${isSuperAdmin ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'}`}>
-              {isSuperAdmin ? 'Super Admin' : 'Admin'}
+        {/* Header */}
+        <header className="bg-slate-900/80 backdrop-blur border-b border-slate-800 px-4 py-2 flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <h1 className="font-semibold text-sm">{menu.find(m => m.id === tab)?.label || superMenu.find(m => m.id === tab)?.label}</h1>
+            <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${isSuperAdmin ? 'bg-purple-500/20 text-purple-400' : 'bg-blue-500/20 text-blue-400'}`}>
+              {isSuperAdmin ? 'Süper Admin' : 'Admin'}
             </span>
           </div>
-          
-          <div className="flex items-center gap-4">
-            {/* Date Range Selector */}
-            <div className="flex items-center gap-2 px-3 py-2 bg-slate-800 rounded-lg border border-slate-700">
-              <Calendar className="h-4 w-4 text-gray-400" />
-              <select
-                value={dateRange}
-                onChange={(e) => setDateRange(e.target.value)}
-                className="bg-transparent text-sm text-white outline-none"
-              >
-                <option value="today">Today</option>
-                <option value="7d">Last 7 days</option>
-                <option value="30d">Last 30 days</option>
-                <option value="90d">Last 90 days</option>
-                <option value="custom">Custom</option>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1 px-2 py-1 bg-slate-800 rounded border border-slate-700">
+              <Calendar className="h-3 w-3 text-gray-400" />
+              <select value={dateRange} onChange={e => setDateRange(e.target.value)} className="bg-transparent text-xs text-white outline-none">
+                <option value="today">Bugün</option>
+                <option value="7d">Son 7 Gün</option>
+                <option value="30d">Son 30 Gün</option>
+                <option value="90d">Son 90 Gün</option>
               </select>
             </div>
-            
-            {/* Export Button */}
-            <button
-              onClick={handleExport}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 text-sm"
-            >
-              <Download className="h-4 w-4" />
-              Export
+            <button className="flex items-center gap-1 px-2 py-1 bg-slate-800 rounded border border-slate-700 text-xs">
+              <Download className="h-3 w-3" /> Export
             </button>
-            
-            {/* Refresh */}
-            <button className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700">
-              <RefreshCw className="h-4 w-4" />
-            </button>
-            
-            {/* User Menu */}
-            <div className="flex items-center gap-3 pl-4 border-l border-slate-700">
+            <button className="p-1.5 bg-slate-800 rounded border border-slate-700"><RefreshCw className="h-3 w-3" /></button>
+            <div className="flex items-center gap-2 pl-3 border-l border-slate-700">
               <div className="text-right">
-                <p className="text-sm font-medium">{user?.full_name}</p>
-                <p className="text-xs text-gray-500">{user?.email}</p>
+                <p className="text-xs font-medium">{user?.full_name}</p>
+                <p className="text-[10px] text-gray-500">{user?.email}</p>
               </div>
-              <button
-                onClick={onLogout}
-                className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg"
-              >
-                <LogOut className="h-5 w-5" />
+              <button onClick={onLogout} className="p-1.5 text-gray-400 hover:text-red-400 rounded hover:bg-red-500/10">
+                <LogOut className="h-4 w-4" />
               </button>
             </div>
           </div>
         </header>
         
-        {/* Content Area */}
-        <main className="flex-1 overflow-auto p-6">
-          {/* Dashboard */}
-          {activeTab === 'dashboard' && (
-            <div className="space-y-6">
-              {/* KPI Cards */}
-              <div className="grid grid-cols-6 gap-4">
-                <KPICard title="Total Visitors" value={formatNumber(stats.totalVisitors)} icon={Eye} color="blue" change={12.5} changeType="up" />
-                <KPICard title="Blocked Clicks" value={formatNumber(stats.blockedVisitors)} icon={Ban} color="red" change={8.3} changeType="up" />
-                <KPICard title="Protection Rate" value={`${stats.protectionRate}%`} icon={Shield} color="green" subtitle="of traffic blocked" />
-                <KPICard title="Active Sites" value={stats.activeSites} icon={Globe} color="purple" />
-                <KPICard title="Active Pools" value={stats.activePools} icon={Layers} color="cyan" />
-                <KPICard title="Blocked IPs" value={formatNumber(stats.blockedIPs)} icon={AlertTriangle} color="orange" />
+        {/* Content */}
+        <main className="flex-1 overflow-auto p-4">
+          {/* DASHBOARD */}
+          {tab === 'dashboard' && (
+            <div className="space-y-4">
+              {/* Row 1: Primary KPIs */}
+              <div className="grid grid-cols-8 gap-3">
+                <KPICard label="Toplam Ziyaretçi" value={formatNumber(stats.total)} icon={Eye} color="blue" trend="up" trendValue="+12.5%" small />
+                <KPICard label="Engellenen" value={formatNumber(stats.blocked)} icon={Ban} color="red" trend="up" trendValue="+8.3%" small />
+                <KPICard label="İzin Verilen" value={formatNumber(stats.allowed)} icon={CheckCircle} color="green" small />
+                <KPICard label="Koruma Oranı" value={`${stats.rate}%`} icon={Shield} color="purple" small />
+                <KPICard label="Benzersiz IP" value={formatNumber(stats.uniqueIPs)} icon={Hash} color="cyan" small />
+                <KPICard label="Engelli IP" value={formatNumber(stats.blockedIPs)} icon={ShieldX} color="orange" small />
+                <KPICard label="Ort. Risk" value={stats.avgRisk} icon={AlertTriangle} color="yellow" small />
+                <KPICard label="Tasarruf" value={formatCurrency(stats.savings)} icon={TrendingUp} color="green" trend="up" trendValue="+₺1.2K" small />
               </div>
               
-              {/* Charts Row */}
-              <div className="grid grid-cols-3 gap-6">
-                {/* Line Chart - Visitors vs Blocked */}
-                <div className="col-span-2 bg-slate-900/50 border border-slate-700/50 rounded-xl p-5">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold flex items-center gap-2">
-                      <Activity className="h-5 w-5 text-purple-400" />
-                      Visitors vs Blocked (Last 30 Days)
-                    </h3>
-                    <div className="flex items-center gap-4 text-xs">
-                      <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-purple-500"></div>Visitors</div>
-                      <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-red-500"></div>Blocked</div>
-                    </div>
+              {/* Row 2: Secondary Stats */}
+              <div className="grid grid-cols-6 gap-3">
+                <div className="bg-slate-900/50 border border-slate-700/50 rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs text-gray-400">Kritik Risk</span>
+                    <AlertCircle className="h-4 w-4 text-red-400" />
                   </div>
-                  <div className="relative">
-                    <MiniLineChart data={DAILY_STATS} dataKey="visitors" color="#a855f7" height={200} />
-                    <div className="absolute inset-0">
-                      <MiniLineChart data={DAILY_STATS} dataKey="blocked" color="#ef4444" height={200} />
-                    </div>
-                  </div>
+                  <p className="text-xl font-bold text-red-400">{formatNumber(stats.critical)}</p>
+                  <ProgressBar value={stats.critical} max={stats.total} color="#ef4444" showLabel={false} height={4} />
                 </div>
-                
+                <div className="bg-slate-900/50 border border-slate-700/50 rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs text-gray-400">Yüksek Risk</span>
+                    <AlertTriangle className="h-4 w-4 text-orange-400" />
+                  </div>
+                  <p className="text-xl font-bold text-orange-400">{formatNumber(stats.high)}</p>
+                  <ProgressBar value={stats.high} max={stats.total} color="#f97316" showLabel={false} height={4} />
+                </div>
+                <div className="bg-slate-900/50 border border-slate-700/50 rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs text-gray-400">Datacenter IP</span>
+                    <Server className="h-4 w-4 text-red-400" />
+                  </div>
+                  <p className="text-xl font-bold text-red-400">{formatNumber(stats.datacenter)}</p>
+                  <ProgressBar value={stats.datacenter} max={stats.total} color="#ef4444" showLabel={false} height={4} />
+                </div>
+                <div className="bg-slate-900/50 border border-slate-700/50 rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs text-gray-400">VPN/Proxy</span>
+                    <Zap className="h-4 w-4 text-orange-400" />
+                  </div>
+                  <p className="text-xl font-bold text-orange-400">{formatNumber(stats.vpn)}</p>
+                  <ProgressBar value={stats.vpn} max={stats.total} color="#f97316" showLabel={false} height={4} />
+                </div>
+                <div className="bg-slate-900/50 border border-slate-700/50 rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs text-gray-400">Havuz Tehditleri</span>
+                    <Layers className="h-4 w-4 text-cyan-400" />
+                  </div>
+                  <p className="text-xl font-bold text-cyan-400">{formatNumber(stats.poolThreats)}</p>
+                  <span className="text-[10px] text-gray-500">{MOCK_POOLS.length} havuzdan</span>
+                </div>
+                <div className="bg-slate-900/50 border border-slate-700/50 rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs text-gray-400">Aktif Site</span>
+                    <Globe className="h-4 w-4 text-purple-400" />
+                  </div>
+                  <p className="text-xl font-bold text-purple-400">{MOCK_SITES.filter(s => s.is_active).length}</p>
+                  <span className="text-[10px] text-gray-500">{MOCK_SITES.length} toplam</span>
+                </div>
+              </div>
+              
+              {/* Row 3: Charts */}
+              <div className="grid grid-cols-4 gap-4">
                 {/* Risk Distribution */}
-                <div className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-5">
-                  <h3 className="font-semibold flex items-center gap-2 mb-4">
-                    <PieChart className="h-5 w-5 text-orange-400" />
-                    Risk Distribution
-                  </h3>
-                  <DonutChart data={riskDistribution} size={140} />
-                </div>
-              </div>
-              
-              {/* Bar Charts Row */}
-              <div className="grid grid-cols-2 gap-6">
-                {/* Top Cities */}
-                <div className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-5">
-                  <h3 className="font-semibold flex items-center gap-2 mb-4">
-                    <MapPin className="h-5 w-5 text-cyan-400" />
-                    Top Cities by Blocked Clicks
-                  </h3>
-                  <BarChart data={cityStats} labelKey="city" valueKey="count" color="#06b6d4" height={180} />
+                <div className="bg-slate-900/50 border border-slate-700/50 rounded-lg p-4">
+                  <h3 className="text-xs font-semibold mb-3 flex items-center gap-2"><PieChart className="h-4 w-4 text-purple-400" /> Risk Dağılımı</h3>
+                  <div className="flex items-center gap-4">
+                    <DonutChart data={riskDist} size={80} />
+                    <div className="space-y-1">
+                      {riskDist.map(d => (
+                        <div key={d.label} className="flex items-center gap-2 text-xs">
+                          <div className="w-2 h-2 rounded" style={{ backgroundColor: d.color }} />
+                          <span className="text-gray-400">{d.label}:</span>
+                          <span className="text-white font-medium">{d.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
                 
-                {/* Device Types */}
-                <div className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-5">
-                  <h3 className="font-semibold flex items-center gap-2 mb-4">
-                    <Laptop className="h-5 w-5 text-blue-400" />
-                    Device Types
-                  </h3>
-                  <BarChart data={deviceStats} labelKey="device" valueKey="count" color="#3b82f6" height={180} />
+                {/* Device Distribution */}
+                <div className="bg-slate-900/50 border border-slate-700/50 rounded-lg p-4">
+                  <h3 className="text-xs font-semibold mb-3 flex items-center gap-2"><Laptop className="h-4 w-4 text-blue-400" /> Cihaz Dağılımı</h3>
+                  <div className="flex items-center gap-4">
+                    <DonutChart data={deviceStats} size={80} />
+                    <div className="space-y-1">
+                      {deviceStats.map(d => (
+                        <div key={d.label} className="flex items-center gap-2 text-xs">
+                          <div className="w-2 h-2 rounded" style={{ backgroundColor: d.color }} />
+                          <span className="text-gray-400">{d.label}:</span>
+                          <span className="text-white font-medium">{formatNumber(d.value)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* IP Type Distribution */}
+                <div className="bg-slate-900/50 border border-slate-700/50 rounded-lg p-4">
+                  <h3 className="text-xs font-semibold mb-3 flex items-center gap-2"><Database className="h-4 w-4 text-orange-400" /> IP Tipi Dağılımı</h3>
+                  <div className="flex items-center gap-4">
+                    <DonutChart data={ipTypeStats} size={80} />
+                    <div className="space-y-1">
+                      {ipTypeStats.slice(0, 4).map(d => (
+                        <div key={d.label} className="flex items-center gap-2 text-xs">
+                          <div className="w-2 h-2 rounded" style={{ backgroundColor: d.color }} />
+                          <span className="text-gray-400">{d.label}:</span>
+                          <span className="text-white font-medium">{d.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Hourly Activity */}
+                <div className="bg-slate-900/50 border border-slate-700/50 rounded-lg p-4">
+                  <h3 className="text-xs font-semibold mb-3 flex items-center gap-2"><Activity className="h-4 w-4 text-cyan-400" /> Saatlik Engelleme</h3>
+                  <MiniBarChart data={hourlyChartData} height={80} />
+                  <div className="flex justify-between text-[10px] text-gray-500 mt-1">
+                    <span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>23:00</span>
+                  </div>
                 </div>
               </div>
               
-              {/* Recent Visitors Table */}
-              <DataTable
-                title="Recent Visitors"
-                columns={visitorColumns}
-                data={MOCK_VISITORS.slice(0, 50)}
-                pageSize={10}
-                onExport={handleExport}
-              />
+              {/* Row 4: City Stats */}
+              <div className="bg-slate-900/50 border border-slate-700/50 rounded-lg p-4">
+                <h3 className="text-xs font-semibold mb-3 flex items-center gap-2"><MapPin className="h-4 w-4 text-cyan-400" /> Şehir Bazlı Engelleme</h3>
+                <div className="grid grid-cols-8 gap-4">
+                  {cityStats.map((c, i) => (
+                    <div key={c.city} className="text-center">
+                      <p className="text-lg font-bold text-white">{formatNumber(c.count)}</p>
+                      <p className="text-xs text-gray-400">{c.city}</p>
+                      <ProgressBar value={c.count} max={cityStats[0].count} color={['#8b5cf6', '#3b82f6', '#06b6d4', '#22c55e', '#eab308', '#f97316', '#ef4444', '#ec4899'][i]} showLabel={false} height={3} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Row 5: Tables */}
+              <div className="grid grid-cols-2 gap-4">
+                <DataTable title="Son Engellenenler" columns={visitorCols.slice(0, 8)} data={MOCK_VISITORS.filter(v => v.is_blocked).slice(0, 50)} pageSize={8} compact />
+                <DataTable title="Site Performansı" columns={siteCols} data={MOCK_SITES} pageSize={8} compact />
+              </div>
+              
+              {/* Row 6: Pools */}
+              <DataTable title="Havuz Performansı" columns={poolCols} data={MOCK_POOLS} pageSize={10} compact />
             </div>
           )}
           
-          {/* Sites Page */}
-          {activeTab === 'sites' && (
-            <DataTable
-              title="Sites Overview"
-              columns={siteColumns}
-              data={MOCK_SITES}
-              pageSize={20}
-              onExport={handleExport}
-            />
-          )}
+          {/* SITES */}
+          {tab === 'sites' && <DataTable title="Tüm Siteler" columns={siteCols} data={MOCK_SITES} pageSize={25} onExport={() => alert('Export')} />}
           
-          {/* Pools Page */}
-          {activeTab === 'pools' && (
-            <DataTable
-              title="Pools (Sector + City)"
-              columns={poolColumns}
-              data={MOCK_POOLS}
-              pageSize={20}
-              onExport={handleExport}
-            />
-          )}
+          {/* POOLS */}
+          {tab === 'pools' && <DataTable title="Tüm Havuzlar (Sektör + Şehir)" columns={poolCols} data={MOCK_POOLS} pageSize={25} onExport={() => alert('Export')} />}
           
-          {/* Visitors Page */}
-          {activeTab === 'visitors' && (
-            <DataTable
-              title="All Visitors"
-              columns={visitorColumns}
-              data={filteredVisitors}
-              pageSize={20}
-              onExport={handleExport}
+          {/* VISITORS */}
+          {tab === 'visitors' && (
+            <DataTable title="Tüm Ziyaretçiler" columns={visitorCols} data={filteredVisitors} pageSize={25} onExport={() => alert('Export')}
               filters={
-                <div className="flex items-center gap-3 flex-wrap">
-                  <Select
-                    options={MOCK_SITES.map(s => ({ value: s.id, label: s.name }))}
-                    value={visitorFilters.site}
-                    onChange={(v) => setVisitorFilters({ ...visitorFilters, site: v })}
-                    placeholder="All Sites"
-                    className="w-40"
-                  />
-                  <Select
-                    options={['Istanbul', 'Ankara', 'Izmir', 'Bursa', 'Antalya', 'Frankfurt', 'Amsterdam'].map(c => ({ value: c, label: c }))}
-                    value={visitorFilters.city}
-                    onChange={(v) => setVisitorFilters({ ...visitorFilters, city: v })}
-                    placeholder="All Cities"
-                    className="w-36"
-                  />
-                  <Select
-                    options={[{ value: 'desktop', label: 'Desktop' }, { value: 'mobile', label: 'Mobile' }, { value: 'tablet', label: 'Tablet' }]}
-                    value={visitorFilters.device}
-                    onChange={(v) => setVisitorFilters({ ...visitorFilters, device: v })}
-                    placeholder="All Devices"
-                    className="w-36"
-                  />
-                  <Select
-                    options={[{ value: 'low', label: 'Low' }, { value: 'medium', label: 'Medium' }, { value: 'high', label: 'High' }, { value: 'critical', label: 'Critical' }]}
-                    value={visitorFilters.riskLevel}
-                    onChange={(v) => setVisitorFilters({ ...visitorFilters, riskLevel: v })}
-                    placeholder="All Risk Levels"
-                    className="w-40"
-                  />
-                  <Select
-                    options={[{ value: 'blocked', label: 'Blocked' }, { value: 'allowed', label: 'Allowed' }]}
-                    value={visitorFilters.status}
-                    onChange={(v) => setVisitorFilters({ ...visitorFilters, status: v })}
-                    placeholder="All Status"
-                    className="w-36"
-                  />
-                  <button
-                    onClick={() => setVisitorFilters({ site: '', city: '', device: '', riskLevel: '', status: '' })}
-                    className="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm"
-                  >
-                    Clear Filters
-                  </button>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Filter className="h-3 w-3 text-gray-500" />
+                  <Select options={SITES.map(s => ({ value: s.id, label: s.name }))} value={filters.site} onChange={v => setFilters({ ...filters, site: v })} placeholder="Tüm Siteler" className="w-32" />
+                  <Select options={CITIES.map(c => ({ value: c, label: c }))} value={filters.city} onChange={v => setFilters({ ...filters, city: v })} placeholder="Tüm Şehirler" className="w-28" />
+                  <Select options={DEVICES.map(d => ({ value: d, label: d.charAt(0).toUpperCase() + d.slice(1) }))} value={filters.device} onChange={v => setFilters({ ...filters, device: v })} placeholder="Tüm Cihazlar" className="w-28" />
+                  <Select options={IP_TYPES.map(t => ({ value: t, label: t.charAt(0).toUpperCase() + t.slice(1) }))} value={filters.ipType} onChange={v => setFilters({ ...filters, ipType: v })} placeholder="Tüm IP Tipleri" className="w-32" />
+                  <Select options={[{ value: 'critical', label: 'Kritik' }, { value: 'high', label: 'Yüksek' }, { value: 'medium', label: 'Orta' }, { value: 'low', label: 'Düşük' }]} value={filters.risk} onChange={v => setFilters({ ...filters, risk: v })} placeholder="Tüm Risk" className="w-24" />
+                  <Select options={[{ value: 'blocked', label: 'Engellendi' }, { value: 'allowed', label: 'İzin' }]} value={filters.status} onChange={v => setFilters({ ...filters, status: v })} placeholder="Tüm Durum" className="w-28" />
+                  <button onClick={() => setFilters({ site: '', city: '', device: '', risk: '', status: '', ipType: '' })} className="px-2 py-1 bg-slate-700 rounded text-xs">Temizle</button>
                 </div>
               }
             />
           )}
           
-          {/* Blocked IPs Page */}
-          {activeTab === 'blocked' && (
-            <DataTable
-              title="Blocked IP Addresses"
-              columns={visitorColumns}
-              data={MOCK_VISITORS.filter(v => v.is_blocked)}
-              pageSize={20}
-              onExport={handleExport}
-            />
-          )}
+          {/* BLOCKED IPS */}
+          {tab === 'blocked' && <DataTable title="Engelli IP Adresleri" columns={blockedIPCols} data={MOCK_BLOCKED_IPS} pageSize={25} onExport={() => alert('Export')} />}
           
-          {/* Users Page (Super Admin Only) */}
-          {activeTab === 'users' && isSuperAdmin && (
-            <DataTable
-              title="User Management"
-              columns={userColumns}
-              data={MOCK_USERS}
-              pageSize={20}
-              onExport={handleExport}
-            />
-          )}
-          
-          {/* Reports Page */}
-          {activeTab === 'reports' && (
-            <div className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-8 text-center">
-              <FileText className="h-16 w-16 text-gray-600 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Reports</h3>
-              <p className="text-gray-500">Report generation and export features coming soon.</p>
+          {/* ANALYTICS */}
+          {tab === 'analytics' && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-4 gap-4">
+                {cityStats.map((c, i) => (
+                  <div key={c.city} className="bg-slate-900/50 border border-slate-700/50 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-white">{c.city}</span>
+                      <MapPin className="h-4 w-4 text-gray-400" />
+                    </div>
+                    <p className="text-2xl font-bold text-purple-400">{formatNumber(c.count)}</p>
+                    <p className="text-xs text-gray-500">Engellenen tıklama</p>
+                    <ProgressBar value={c.count} max={cityStats[0].count} color="#8b5cf6" showLabel={false} height={4} />
+                  </div>
+                ))}
+              </div>
+              <DataTable title="Detaylı Analiz" columns={visitorCols} data={filteredVisitors} pageSize={30} onExport={() => alert('Export')} />
             </div>
           )}
           
-          {/* Settings Page */}
-          {activeTab === 'settings' && (
-            <div className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-8 text-center">
-              <Settings className="h-16 w-16 text-gray-600 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Settings</h3>
-              <p className="text-gray-500">System settings and configuration options.</p>
-            </div>
-          )}
+          {/* USERS (Super Admin) */}
+          {tab === 'users' && isSuperAdmin && <DataTable title="Kullanıcı Yönetimi" columns={userCols} data={MOCK_USERS} pageSize={25} onExport={() => alert('Export')} />}
           
-          {/* Packages Page (Super Admin Only) */}
-          {activeTab === 'packages' && isSuperAdmin && (
-            <div className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-8 text-center">
-              <Package className="h-16 w-16 text-gray-600 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Package Management</h3>
-              <p className="text-gray-500">Manage subscription packages and pricing.</p>
-            </div>
-          )}
-          
-          {/* Campaigns Page (Super Admin Only) */}
-          {activeTab === 'campaigns' && isSuperAdmin && (
-            <div className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-8 text-center">
-              <Megaphone className="h-16 w-16 text-gray-600 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Campaign Management</h3>
-              <p className="text-gray-500">Manage promotional campaigns and discounts.</p>
-            </div>
-          )}
-          
-          {/* System Logs Page (Super Admin Only) */}
-          {activeTab === 'system' && isSuperAdmin && (
-            <div className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-8 text-center">
-              <Server className="h-16 w-16 text-gray-600 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">System Logs</h3>
-              <p className="text-gray-500">View system logs and audit trails.</p>
+          {/* Other tabs */}
+          {['reports', 'settings', 'packages', 'campaigns', 'system'].includes(tab) && (
+            <div className="bg-slate-900/50 border border-slate-700/50 rounded-lg p-8 text-center">
+              <Settings className="h-12 w-12 text-gray-600 mx-auto mb-3" />
+              <h3 className="text-lg font-semibold mb-2">{menu.find(m => m.id === tab)?.label || superMenu.find(m => m.id === tab)?.label}</h3>
+              <p className="text-gray-500 text-sm">Bu bölüm geliştirme aşamasında...</p>
             </div>
           )}
         </main>
@@ -1050,32 +943,20 @@ const AdminDashboard = ({ user, onLogout }) => {
   );
 };
 
-// Main App
+// ==================== APP ====================
 function App() {
   const [user, setUser] = useState(null);
   
   useEffect(() => {
     const token = localStorage.getItem('token');
-    const savedUser = localStorage.getItem('user');
-    if (token && savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
+    const saved = localStorage.getItem('user');
+    if (token && saved) setUser(JSON.parse(saved));
   }, []);
   
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setUser(null);
-  };
+  const handleLogout = () => { localStorage.removeItem('token'); localStorage.removeItem('user'); setUser(null); };
+  const handleLogin = (u) => setUser(u);
   
-  const handleLogin = (userData) => {
-    setUser(userData);
-  };
-  
-  if (!user) {
-    return <LoginPage onSuccess={handleLogin} />;
-  }
-  
+  if (!user) return <LoginPage onSuccess={handleLogin} />;
   return <AdminDashboard user={user} onLogout={handleLogout} />;
 }
 
