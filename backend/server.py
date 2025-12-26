@@ -313,65 +313,8 @@ async def require_approved_user(current_user: dict = Depends(get_current_user)) 
         raise HTTPException(status_code=403, detail="Hesabınız henüz onaylanmamış")
     return current_user
 
-def calculate_risk_score(visitor_data: dict, existing_visitors: list, blocked_ips: list) -> tuple:
-    """Calculate risk score based on multiple factors"""
-    score = 0
-    factors = []
-    
-    ip = visitor_data.get("ip_address", "")
-    
-    # Check if IP is already blocked
-    if ip in blocked_ips:
-        return 100, ["IP daha önce engellenmiş"], RiskLevel.CRITICAL
-    
-    # Check IP type
-    ip_type = visitor_data.get("ip_type", "")
-    if ip_type in ["datacenter", "vpn", "proxy"]:
-        score += 30
-        factors.append(f"Şüpheli IP tipi: {ip_type}")
-    
-    # Check time on page (too short is suspicious)
-    time_on_page = visitor_data.get("time_on_page", 0)
-    if time_on_page and time_on_page < 3:
-        score += 20
-        factors.append("Çok kısa sayfa süresi")
-    
-    # Check scroll depth
-    scroll_depth = visitor_data.get("scroll_depth", 0)
-    if scroll_depth and scroll_depth < 10:
-        score += 10
-        factors.append("Düşük scroll derinliği")
-    
-    # Check mouse movements
-    mouse_movements = visitor_data.get("mouse_movements", 0)
-    if mouse_movements is not None and mouse_movements < 5:
-        score += 15
-        factors.append("Az mouse hareketi")
-    
-    # Check if same IP visited multiple times in short period
-    same_ip_count = sum(1 for v in existing_visitors if v.get("ip_address") == ip)
-    if same_ip_count > 5:
-        score += 25
-        factors.append(f"Aynı IP'den çok fazla ziyaret: {same_ip_count}")
-    
-    # Check for missing gclid (if referer is from Google Ads)
-    referer = visitor_data.get("referer", "")
-    gclid = visitor_data.get("gclid", "")
-    if referer and "google" in referer.lower() and not gclid:
-        score += 15
-        factors.append("Google'dan geldi ama gclid yok")
-    
-    # Determine risk level
-    if score >= 70:
-        risk_level = RiskLevel.CRITICAL
-    elif score >= 50:
-        risk_level = RiskLevel.HIGH
-    elif score >= 30:
-        risk_level = RiskLevel.MEDIUM
-    else:
-        risk_level = RiskLevel.LOW
-    
-    return min(score, 100), factors, risk_level
+# Risk Engine import
+from risk_engine import analyze_visitor_risk
 
 # ==================== AUTH ROUTES ====================
 @api_router.post("/auth/register")
