@@ -716,27 +716,38 @@ async def track_visitor(visitor_data: VisitorTrack, request: Request):
     # Get IP from request if not provided
     ip_address = visitor_data.ip_address or request.client.host
     
-    # Get recent visitors for this site
+    # Get recent visitors for this site (last 24 hours for pattern analysis)
+    yesterday = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
     recent_visitors = await db.visitors.find(
-        {"site_id": site["id"]},
+        {"site_id": site["id"], "created_at": {"$gte": yesterday}},
         {"_id": 0}
-    ).sort("created_at", -1).limit(100).to_list(100)
+    ).sort("created_at", -1).limit(500).to_list(500)
     
     # Get blocked IPs from pool
-    blocked_ips = []
+    pool_blocked_ips = []
     if site.get("pool_id"):
         pool = await db.pools.find_one({"id": site["pool_id"]}, {"_id": 0})
         if pool:
-            blocked_ips = pool.get("blocked_ips", [])
+            pool_blocked_ips = pool.get("blocked_ips", [])
     
-    # Also get globally blocked IPs
+    # Get globally blocked IPs
     global_blocked = await db.blocked_ips.find({"is_global": True}, {"_id": 0}).to_list(10000)
-    blocked_ips.extend([b["ip_address"] for b in global_blocked])
+    blocked_ips = [b["ip_address"] for b in global_blocked]
     
-    # Calculate risk score
+    # Prepare visitor data for analysis
     visitor_dict = visitor_data.model_dump()
     visitor_dict["ip_address"] = ip_address
-    risk_score, risk_factors, risk_level = calculate_risk_score(visitor_dict, recent_visitors, blocked_ips)
+    
+    # Use advanced risk engine for analysis
+    risk_score, risk_factors, risk_level, should_block = await analyze_visitor_risk(
+        visitor_dict, 
+        recent_visitors, 
+        blocked_ips,
+        pool_blocked_ips
+    )
+    
+    # Extract factor descriptions for storage
+    factor_descriptions = [f.get("factor", "") for f in risk_factors if isinstance(f, dict)]
     
     # Create visitor record
     visitor = Visitor(
@@ -771,15 +782,18 @@ async def track_visitor(visitor_data: VisitorTrack, request: Request):
         timezone=visitor_data.timezone,
         language=visitor_data.language,
         risk_score=risk_score,
-        risk_level=risk_level,
-        risk_factors=risk_factors,
-        is_blocked=risk_level in [RiskLevel.HIGH, RiskLevel.CRITICAL]
+        risk_level=RiskLevel(risk_level),
+        risk_factors=factor_descriptions,
+        is_blocked=should_block,
+        blocked_reason="; ".join(factor_descriptions[:3]) if should_block else None
     )
     
-    visitor_dict = visitor.model_dump()
-    visitor_dict["created_at"] = visitor_dict["created_at"].isoformat()
+    visitor_dict_db = visitor.model_dump()
+    visitor_dict_db["created_at"] = visitor_dict_db["created_at"].isoformat()
+    # Store full risk analysis
+    visitor_dict_db["risk_analysis"] = risk_factors
     
-    await db.visitors.insert_one(visitor_dict)
+    await db.visitors.insert_one(visitor_dict_db)
     
     # Update site stats
     await db.sites.update_one(
@@ -787,36 +801,38 @@ async def track_visitor(visitor_data: VisitorTrack, request: Request):
         {
             "$inc": {
                 "total_visitors": 1,
-                "blocked_clicks": 1 if visitor.is_blocked else 0
+                "blocked_clicks": 1 if should_block else 0
             }
         }
     )
     
-    # If blocked, add to pool's blocked IPs
-    if visitor.is_blocked and site.get("pool_id"):
+    # If blocked, add to pool's blocked IPs and blocked_ips collection
+    if should_block and site.get("pool_id"):
         await db.pools.update_one(
             {"id": site["pool_id"]},
             {"$addToSet": {"blocked_ips": ip_address}}
         )
         
-        # Also add to blocked_ips collection
+        # Add to blocked_ips collection with full details
         blocked_ip = BlockedIP(
             ip_address=ip_address,
             pool_id=site.get("pool_id"),
             site_id=site["id"],
-            reason=", ".join(risk_factors),
+            reason="; ".join(factor_descriptions[:5]),
             risk_score=risk_score,
-            risk_factors=risk_factors,
+            risk_factors=factor_descriptions,
             blocked_by="auto"
         )
         blocked_dict = blocked_ip.model_dump()
         blocked_dict["blocked_at"] = blocked_dict["blocked_at"].isoformat()
+        blocked_dict["risk_analysis"] = risk_factors  # Full analysis
         await db.blocked_ips.insert_one(blocked_dict)
     
     return {
-        "status": "blocked" if visitor.is_blocked else "allowed",
+        "status": "blocked" if should_block else "allowed",
         "risk_score": risk_score,
-        "risk_level": risk_level
+        "risk_level": risk_level,
+        "risk_factors": risk_factors[:3] if should_block else []  # Return top 3 factors
     }
 
 @api_router.get("/visitors")
