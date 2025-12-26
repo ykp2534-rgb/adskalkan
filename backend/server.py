@@ -583,6 +583,7 @@ async def create_promotion(promo_data: PromotionCreate, current_user: dict = Dep
     promo_dict["created_at"] = promo_dict["created_at"].isoformat()
     
     await db.promotions.insert_one(promo_dict)
+    promo_dict.pop("_id", None)
     
     # Update user's promo info
     await db.users.update_one(
