@@ -535,6 +535,7 @@ async def create_campaign(campaign_data: CampaignCreate, current_user: dict = De
     campaign_dict["end_date"] = campaign_dict["end_date"].isoformat()
     
     await db.campaigns.insert_one(campaign_dict)
+    campaign_dict.pop("_id", None)
     return campaign_dict
 
 @api_router.get("/admin/campaigns")
